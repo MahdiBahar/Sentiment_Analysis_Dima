@@ -56,9 +56,9 @@ def fetch_comments_to_analyze(limit=100):
             SELECT id, description, grade
             FROM comments
             WHERE sentiment_result IS NULL
+            ORDER BY id ASC
             LIMIT %s;
         """
-     
         cursor.execute(query, (limit,))
         comments = cursor.fetchall()
         logger.info(f"Fetched {len(comments)} comments for analysis.")
@@ -68,6 +68,7 @@ def fetch_comments_to_analyze(limit=100):
     except Exception as e:
         logger.error(f"Error fetching comments: {e}", exc_info=True)
         return []
+
 
 # Update the comment table with the sentiment result and sentiment score
 def update_sentiment(id, sentiment_result, sentiment_score, second_model_processed):
