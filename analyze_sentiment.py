@@ -15,15 +15,6 @@ for var in ["http_proxy", "https_proxy", "all_proxy", "HTTP_PROXY", "HTTPS_PROXY
 # Create Translator without proxies and without trusting env
 translator = Translator(proxies=None, raise_exception=False, http2=False)
 
-# # Prevent proxy issues with googletrans / httpx
-# os.environ.pop("http_proxy", None)
-# os.environ.pop("https_proxy", None)
-# os.environ.pop("all_proxy", None)
-
-# # Create translator with no proxy
-# translator = Translator(proxies={})
-
-
 # Load environment variables from .env file
 load_dotenv()
 
@@ -51,7 +42,8 @@ SENTIMENT_SCORES = {
     "mixed": 3,
     "positive": 4,
     "very positive": 5,
-    "no sentiment expressed": 3
+    "no sentiment expressed": 3,
+    "no comments" : 0
 }
 
 # Fetch comments that need sentiment analysis for a specific app
@@ -66,6 +58,7 @@ def fetch_comments_to_analyze(limit=100):
             WHERE sentiment_result IS NULL
             LIMIT %s;
         """
+     
         cursor.execute(query, (limit,))
         comments = cursor.fetchall()
         logger.info(f"Fetched {len(comments)} comments for analysis.")
@@ -141,14 +134,25 @@ def analyze_and_update_sentiment(comments):
     for comment_id, comment_text, comment_rating in comments:
         try:
             logger.info(f"Analyzing sentiment for comment_id: {comment_id}")
+
+            # Handle empty or whitespace-only comment
+            if not comment_text or comment_text.strip() == "":
+                sentiment_result = "no comments"
+                sentiment_score = 0
+                second_model_processed = False
+                logger.info(f"Comment {comment_id} is empty — marked as 'no comments'")
+                update_sentiment(comment_id, sentiment_result, sentiment_score, second_model_processed)
+                continue  # Skip to next comment
+
+            # Run MT5 model
             sentiment_result = run_model(comment_text)
             second_model_processed = False
-            # If the first model returns "non-sentiment", run the second model
+
+            # If result is unclear, run fallback
             if sentiment_result.lower() in ["no sentiment expressed", "mixed", "neutral"]:
                 logger.debug(f"Running second model for comment_id: {comment_id}")
                 second_model_result = run_second_model(comment_text)
 
-            # Apply conditional update logic based on second model result and rating
                 if second_model_result == "NEGATIVE" and comment_rating == 1:
                     sentiment_result = "negative"
                     second_model_processed = True
@@ -157,16 +161,18 @@ def analyze_and_update_sentiment(comments):
                     sentiment_result = "positive"
                     second_model_processed = True
                     print("second_model is used")
-                # Otherwise, retain "no sentiment expressed"
 
             sentiment_result, sentiment_score = validate_and_score_sentiment(sentiment_result)
             update_sentiment(comment_id, sentiment_result, sentiment_score, second_model_processed)
+
             logger.info(f"Updated comment_id: {comment_id} with sentiment: {sentiment_result}, score: {sentiment_score}")
         except Exception as e:
             logger.error(f"Error processing comment_id: {comment_id}: {e}", exc_info=True)
             update_sentiment(comment_id, "Missed Value", 11, False)
             continue
+
         time.sleep(0.3)
+
 
 
 if __name__ == "__main__":
