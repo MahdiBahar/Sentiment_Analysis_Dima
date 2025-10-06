@@ -1,4 +1,4 @@
-import psycopg2
+import pandas as pd
 import pytest
 from connect_to_database_func import connect_db
 
@@ -17,3 +17,20 @@ def test_connect_and_get_data():
     assert result[0][0] == 1
     row = fetch_data("SELECT * FROM comments LIMIT 1;")
     print(row)
+
+def fetch_comments():
+    query = "SELECT id, description,created_at FROM comments LIMIT 100;"
+    data = fetch_data(query)
+    df = pd.DataFrame(data, columns=["id", "description", "created_at"])  # Adjust columns to match your table
+    return df
+
+def test_fetch_comments():
+    df = fetch_comments()
+    assert not df.empty
+    assert "description" in df.columns
+    print(df.head())
+
+
+
+df = fetch_comments()
+print(df.head())
