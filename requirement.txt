@@ -13,3 +13,4 @@ seaborn
 openpyxl
 emoji
 scikit-learn
+nltk
