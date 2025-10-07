@@ -12,3 +12,4 @@ regex
 seaborn
 openpyxl
 emoji
+scikit-learn
