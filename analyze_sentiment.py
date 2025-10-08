@@ -7,6 +7,7 @@ from connect_to_database_func import connect_db
 from dotenv import load_dotenv
 from logging_config import setup_logger  # Import logger setup function
 import os
+# from main import logger
 
  #Completely remove proxy env vars for this process
 for var in ["http_proxy", "https_proxy", "all_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY"]:
@@ -18,7 +19,7 @@ translator = Translator(proxies=None, raise_exception=False, http2=False)
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialize logger
+# # Initialize logger
 logger = setup_logger(name="sentiment_analysis", log_file="analyze_sentiment.log")
 
 # Load the tokenizer and model
@@ -173,16 +174,3 @@ def analyze_and_update_sentiment(comments):
             continue
 
         time.sleep(0.3)
-
-
-
-if __name__ == "__main__":
-#     comments = fetch_comments_to_analyze(limit=100)
-#     analyze_and_update_sentiment(comments, app_id=None)  # app_id is not needed anymore
-    while True:
-        comments = fetch_comments_to_analyze(limit=100)
-        if not comments:
-            break
-        analyze_and_update_sentiment(comments)
-        
-        logger.info("Sentiment analysis completed.")
