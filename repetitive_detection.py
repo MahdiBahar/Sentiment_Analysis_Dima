@@ -6,12 +6,14 @@ import re
 def flag_repetitive_comments():
     conn = connect_db()
     query = """
-        SELECT id, national_code_hash, description, imported_at
+        SELECT id, national_code_hash, description, imported_at, sentiment_result
         FROM comments
         WHERE description IS NOT NULL
         ORDER BY national_code_hash, imported_at;
     """
     df = pd.read_sql(query, conn)
+    # Filter out "no comments"
+    df = df[df["sentiment_result"] != "no comments"].copy()
     conn.close()
 
     # Convert imported_at → datetime
@@ -61,8 +63,6 @@ def flag_repetitive_comments():
     conn.commit()
     cur.close()
     conn.close()
-
-    
 
     print("✅ Repetitive comment flagging (by national_code_hash + imported_at) completed.")
 
