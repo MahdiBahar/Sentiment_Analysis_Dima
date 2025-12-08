@@ -17,19 +17,19 @@ def connect_db():
     Create and return a PostgreSQL connection using credentials from .env.
 
     Expected .env variables:
-      PGHOST
-      PGPORT
-      PGDATABASE
-      PGUSER
-      PGPASSWORD
+      DB_HOST
+      DB_PORT
+      DB_NAME
+      DB_USER
+      DB_PASS
     """
     try:
         conn = psycopg2.connect(
-            host=os.getenv("PGHOST", "localhost"),
-            port=os.getenv("PGPORT", "5432"),
-            dbname=os.getenv("PGDATABASE", "postgres"),
-            user=os.getenv("PGUSER", "postgres"),
-            password=os.getenv("PGPASSWORD", "postgres"),
+            host=os.getenv("DB_HOST", "localhost"),
+            port=os.getenv("DB_PORT", "5432"),
+            dbname=os.getenv("DB_NAME", "postgres"),
+            user=os.getenv("DB_USER", "postgres"),
+            password=os.getenv("DB_PASS", "postgres"),
         )
         # You’re explicitly calling conn.commit() in your code,
         # so we keep autocommit disabled (default = False).
