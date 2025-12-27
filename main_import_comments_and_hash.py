@@ -85,18 +85,18 @@ def main():
 
 
 
-            for r in cur.fetchall():
+            # for r in cur.fetchall():
     
-                (id_, title, grade, desc, nc_hash, created_at, imported_at) = r
-                print(
-                    id_,
-                    title,
-                    grade,
-                    desc,
-                    nc_hash,
-                    created_at.strftime("%Y-%m-%d %H:%M:%S.%f"),
-                    imported_at.strftime("%Y-%m-%d %H:%M:%S.%f"),
-                            )   
+            #     (id_, title, grade, desc, nc_hash, created_at, imported_at) = r
+            #     print(
+            #         id_,
+            #         title,
+            #         grade,
+            #         desc,
+            #         nc_hash,
+            #         created_at.strftime("%Y-%m-%d %H:%M:%S.%f"),
+            #         imported_at.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                            # )   
         print("🎉 Data import completed successfully!")
     finally:
         conn.close()

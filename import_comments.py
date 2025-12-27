@@ -44,14 +44,15 @@ def hash_string(value: str) -> str:
 
 def parse_timestamp(ts: str) -> datetime:
     """
-    Python equivalent of Go parseTimestamp with a bit more robustness.
-    Supports:
-    - "2025-10-09-05.23.59.877774"  (Go-style)
-    - "11/29/25 12:05 AM"           (your sample CSV)
+    Support multiple timestamp formats:
+    - Go-style: 2025-10-09-05.23.59.877774
+    - 12h clock without seconds: 11/29/25 12:05 AM
+    - 12h clock with 4-digit year: 11/29/2025 12:05 AM
+    - 24h clock with/without seconds: 11/29/2025 00:05:18
     """
     ts = ts.strip()
 
-    # Try Go-style: 2025-10-09-05.23.59.877774
+    # 1) Try Go-style: 2025-10-09-05.23.59.877774
     parts = ts.split("-", 3)
     if len(parts) == 4 and "." in parts[3]:
         year, month, day, time_part = parts
@@ -61,15 +62,25 @@ def parse_timestamp(ts: str) -> datetime:
         try:
             return datetime.strptime(ts_norm, "%Y-%m-%d %H:%M:%S.%f")
         except ValueError:
-            pass
+            pass  # fall through to other formats
 
-    # Try format from your example: 11/29/25 12:05 AM
-    for fmt in ("%m/%d/%y %I:%M %p", "%m/%d/%Y %I:%M %p"):
+    # 2) Try a list of known formats
+    formats = [
+        "%m/%d/%y %I:%M %p",    # 11/29/25 12:05 AM
+        "%m/%d/%Y %I:%M %p",    # 11/29/2025 12:05 AM
+        "%m/%d/%y %H:%M",       # 11/29/25 00:05
+        "%m/%d/%Y %H:%M",       # 11/29/2025 00:05
+        "%m/%d/%y %H:%M:%S",    # 11/29/25 00:05:18
+        "%m/%d/%Y %H:%M:%S",    # 11/29/2025 00:05:18  ← your current format
+    ]
+
+    for fmt in formats:
         try:
             return datetime.strptime(ts, fmt)
         except ValueError:
             continue
 
+    # 3) If nothing matched, fail loudly (your log will show this)
     raise ValueError(f"Unsupported timestamp format: {ts}")
 
 
