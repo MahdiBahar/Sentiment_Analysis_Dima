@@ -25,44 +25,8 @@ The goal is to transform raw user comments into actionable insights for product,
 
 ## High-Level Architecture
 
-Raw User Comments
-|
-v
-PostgreSQL Database
-(comments table)
-|
-+------------------------------+
-| |
-v v
-Sentiment Analysis Duplicate Detection
-(primary + fallback) (per user & time window)
 
-markdown
-Copy code
-    |
-    v
-Text Analytics
-(TF-IDF, n-grams)
-
-markdown
-Copy code
-    |
-    v
-Representative Comment Selection
-(core / outliers / suggestions)
-
-markdown
-Copy code
-    |
-    v
-LLM-Based Structured Summaries
-(Phi-4 via Ollama)
-
-markdown
-Copy code
-    |
-    v
-JSON Outputs for UI & BI
+![High-Level Architecture](docs/Architecture.png)
 
 
 ## Database Schema (Key Columns)
