@@ -25,54 +25,67 @@ The goal is to transform raw user comments into actionable insights for product,
 
 ## High-Level Architecture
 
-                ┌────────────────────┐
-                │  Raw User Comments  │
-                └─────────┬──────────┘
-                          │
-                          ▼
-                ┌────────────────────┐
-                │ PostgreSQL Database │
-                │  (comments table)  │
-                └─────────┬──────────┘
-                          │
-          ┌───────────────┼────────────────┐
-          │               │                │
-          ▼               ▼                ▼
- Sentiment Analysis   Duplicate Detection   Text Analytics
- (MT5 + fallback)   (per user & time)     (TF-IDF, n-grams)
-          │               │                │
-          └───────────────┼────────────────┘
-                          ▼
-            Representative Comment Selection
-          (core / outliers / suggestions)
-                          │
-                          ▼
-              LLM-Based Structured Summaries
-                 (Phi-4 via Ollama)
-                          │
-                          ▼
-               JSON Outputs for UI & BI
+Raw User Comments
+|
+v
+PostgreSQL Database
+(comments table)
+|
++------------------------------+
+| |
+v v
+Sentiment Analysis Duplicate Detection
+(primary + fallback) (per user & time window)
+
+markdown
+Copy code
+    |
+    v
+Text Analytics
+(TF-IDF, n-grams)
+
+markdown
+Copy code
+    |
+    v
+Representative Comment Selection
+(core / outliers / suggestions)
+
+markdown
+Copy code
+    |
+    v
+LLM-Based Structured Summaries
+(Phi-4 via Ollama)
+
+markdown
+Copy code
+    |
+    v
+JSON Outputs for UI & BI
 
 
 ## Database Schema (Key Columns)
 
-### Table: comments
+### Table: `comments`
 
-C| Column name              | Description                   |
-| ------------------------ | ----------------------------- |
-| `id`                     | Primary key                   |
-| `title`                  | Feature or functional area    |
-| `grade`                  | User rating (e.g. 1–5)        |
-| `description`            | User comment text             |
-| `national_code_hash`     | Hashed user identifier        |
-| `mobile_no_hash`         | Hashed mobile number          |
-| `created_at`             | Original comment timestamp    |
-| `imported_at`            | Ingestion timestamp           |
-| `sentiment_result`       | Sentiment label               |
-| `sentiment_score`        | Numeric sentiment score       |
-| `second_model_processed` | Fallback model flag           |
-| `is_repetitive`          | Duplicate flag                |
-| `duplicate_of`           | Reference to original comment |
+| Column Name             | Description |
+|-------------------------|------------|
+| `id`                    | Primary key |
+| `title`                 | Feature or functional area |
+| `grade`                 | User rating (e.g. 1–5) |
+| `description`           | User comment text |
+| `national_code_hash`    | Hashed user identifier |
+| `mobile_no_hash`        | Hashed mobile number |
+| `created_at`            | Original comment timestamp |
+| `imported_at`           | Ingestion timestamp |
+| `sentiment_result`      | Sentiment label |
+| `sentiment_score`       | Numeric sentiment score |
+| `second_model_processed`| Fallback model flag |
+| `is_repetitive`         | Duplicate flag |
+| `duplicate_of`          | Reference to original comment |
+
+
 
 ### 1. Data Ingestion
 
