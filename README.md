@@ -1,30 +1,29 @@
 # Sentiment_Analysis_Dima
 
 
-
-Dima User Feedback Analytics Pipeline
-Overview
+# Dima User Feedback Analytics Pipeline
+## Overview
 
 This project implements an end-to-end analytics pipeline for user feedback (comments) collected from the Dima banking application.
 The goal is to transform raw user comments into actionable insights for product, engineering, and business teams.
 
-The pipeline covers:
+### The pipeline covers:
 
-Data ingestion into a database
+- Data ingestion into a database
 
-Sentiment analysis (with fallback logic)
+- Sentiment analysis (with fallback logic)
 
-Duplicate / repetitive comment detection
+- Duplicate / repetitive comment detection
 
-Text analytics (TF-IDF, n-grams)
+- Text analytics (TF-IDF, n-grams)
 
-Representative comment extraction (core, outliers, suggestions)
+- Representative comment extraction (core, outliers, suggestions)
 
-Structured summarization using a local LLM (Phi-4 via Ollama)
+- Structured summarization using a local LLM (Phi-4 via Ollama)
 
-JSON outputs ready for dashboards and UI consumption
+- JSON outputs ready for dashboards and UI consumption
 
-High-Level Architecture
+## High-Level Architecture
 
                 ┌────────────────────┐
                 │  Raw User Comments  │
@@ -54,68 +53,72 @@ High-Level Architecture
                           ▼
                JSON Outputs for UI & BI
 
-Database Schema (Key Columns)
 
-Table: comments
+## Database Schema (Key Columns)
 
-Column name	Description
-id	Primary key
-title	Feature or functional area
-grade	User rating (e.g. 1–5)
-description	User comment text
-national_code_hash	Hashed user identifier
-mobile_no_hash	Hashed mobile number
-created_at	Original comment timestamp
-imported_at	Ingestion timestamp
-sentiment_result	Sentiment label
-sentiment_score	Numeric sentiment score
-second_model_processed	Fallback model flag
-is_repetitive	Duplicate flag
-duplicate_of	Reference to original comment
-1. Data Ingestion
+### Table: comments
 
-User comments are ingested from external sources (e.g. app stores).
+C| Column name              | Description                   |
+| ------------------------ | ----------------------------- |
+| `id`                     | Primary key                   |
+| `title`                  | Feature or functional area    |
+| `grade`                  | User rating (e.g. 1–5)        |
+| `description`            | User comment text             |
+| `national_code_hash`     | Hashed user identifier        |
+| `mobile_no_hash`         | Hashed mobile number          |
+| `created_at`             | Original comment timestamp    |
+| `imported_at`            | Ingestion timestamp           |
+| `sentiment_result`       | Sentiment label               |
+| `sentiment_score`        | Numeric sentiment score       |
+| `second_model_processed` | Fallback model flag           |
+| `is_repetitive`          | Duplicate flag                |
+| `duplicate_of`           | Reference to original comment |
 
-Data is inserted into PostgreSQL using a stable ingestion script.
+### 1. Data Ingestion
 
-All text processing happens after persistence.
+- User comments are ingested from external sources (e.g. app stores).
 
-2. Sentiment Analysis Pipeline
-2.1 Primary Sentiment Model
+- Data is inserted into PostgreSQL using a stable ingestion script.
+
+- All text processing happens after persistence.
+
+### 2. Sentiment Analysis Pipeline
+
+#### 2.1 Primary Sentiment Model
 
 Model: persiannlp/mt5-base-parsinlu-sentiment-analysis
 
 Output labels:
 
-very negative
+- very negative
 
-negative
+- negative
 
-neutral
+- neutral
 
-mixed
+- mixed
 
-positive
+- positive
 
-very positive
+- very positive
 
-no sentiment expressed
+- no sentiment expressed
 
-2.2 Fallback Model Logic
+#### 2.2 Fallback Model Logic
 
 If the primary model outputs:
 
-neutral
+- neutral
 
-mixed
+- mixed
 
-no sentiment expressed
+- no sentiment expressed
 
 Then:
 
-A secondary model is executed (via translation + English classifier).
+- A secondary model is executed (via translation + English classifier).
 
-2.3 Empty Comment Handling
+#### 2.3 Empty Comment Handling
 
 If description is null or empty:
 
@@ -123,19 +126,23 @@ Skip all models
 
 Set:
 
-sentiment_result = "no comments"
+- sentiment_result = "no comments"
 
-sentiment_score = 0
+- sentiment_score = 0
 
-2.4 Sentiment Score Mapping
-Sentiment label	Score
-very negative	1
-negative	2
-neutral / mixed	3
-positive	4
-very positive	5
-no comments	0
-2.5 Batch Processing
+#### 2.4 Sentiment Score Mapping
+
+| Sentiment label | Score |
+| --------------- | ----- |
+| very negative   | 1     |
+| negative        | 2     |
+| neutral / mixed | 3     |
+| positive        | 4     |
+| very positive   | 5     |
+| no comments     | 0     |
+
+
+#### 2.5 Batch Processing
 
 Comments are processed in batches (e.g. LIMIT 100)
 
@@ -143,32 +150,32 @@ Only rows with sentiment_result IS NULL are selected
 
 Results are written back to the database
 
-3. Repetitive / Duplicate Comment Detection
-Goal
+### 3. Repetitive / Duplicate Comment Detection
+#### Goal
 
 Detect spam or repetitive feedback from the same user.
 
-Rules
+#### Rules
 
 A comment is marked as repetitive if:
 
-Same national_code_hash
+- Same national_code_hash
 
-Same normalized description
+- Same normalized description
 
-Same title (feature)
+- Same title (feature)
 
-Time difference ≤ 1 hour
+- Time difference ≤ 1 hour
 
-sentiment_result != "no comments"
+- sentiment_result != "no comments"
 
-Output
+#### Output
 
-is_repetitive = TRUE
+- is_repetitive = TRUE
 
-duplicate_of = <id of original comment>
+- duplicate_of = <id of original comment>
 
-Reset Strategy
+#### Reset Strategy
 
 Before each run:
 
@@ -176,82 +183,86 @@ UPDATE comments
 SET is_repetitive = FALSE,
     duplicate_of = NULL;
 
-4. Text Analytics (TF-IDF & N-grams)
-Preprocessing
 
-Custom Persian preprocessing function
+### 4. Text Analytics (TF-IDF & N-grams)
 
-Optional:
+#### Preprocessing
 
-number normalization
+- Custom Persian preprocessing function
 
-punctuation removal
+- Optional:
 
-diacritics removal
+-- number normalization
 
-Tokenization using NLTK
+-- punctuation removal
 
-Lightweight Persian stopwords
+-- diacritics removal
 
-TF-IDF Analysis
+-- Tokenization using NLTK
 
-Extracts:
+-- Lightweight Persian stopwords
 
-Bigrams (2-grams)
+#### TF-IDF Analysis
 
-Trigrams (3-grams)
+- Extracts:
 
-Computed separately for:
+-- Bigrams (2-grams)
 
-All comments
+-- Trigrams (3-grams)
 
-Negative group (negative + very negative)
+#### Computed separately for:
 
-Positive group (positive + very positive)
+- All comments
 
-Neutral group (neutral + mixed + no sentiment expressed)
+- Negative group (negative + very negative)
 
-Output
+- Positive group (positive + very positive)
 
-Printed to console
+- Neutral group (neutral + mixed + no sentiment expressed)
 
-Optionally exported as CSV or TXT
+#### Output
 
-5. Representative Comment Extraction (Non-LLM)
-Objective
+- Printed to console
+
+- Optionally exported as CSV or TXT
+
+### 5. Representative Comment Extraction (Non-LLM)
+
+#### Objective
 
 Reduce thousands of comments into a small, meaningful subset.
 
-Outputs
+#### Outputs
 
-Core: most representative comments
+- Core: most representative comments
 
-Outliers: rare / novel / risky comments
+- Outliers: rare / novel / risky comments
 
-Suggestions: feature requests
+- Suggestions: feature requests
 
-Method
+#### Method
 
-TF-IDF vectorization
+- TF-IDF vectorization
 
-Centroid similarity for core selection
+- Centroid similarity for core selection
 
-Low-similarity or unique patterns for outliers
+- Low-similarity or unique patterns for outliers
 
-Rule-based + TF-IDF signals for suggestions
+- Rule-based + TF-IDF signals for suggestions
 
-6. LLM-Based Structured Summarization
-Model
+### 6. LLM-Based Structured Summarization
 
-Phi-4, running locally via Ollama
+#### Model
 
-Design Principles
+- Phi-4, running locally via Ollama
 
-LLM is called after filtering, not on raw data
+#### Design Principles
 
-Input size is controlled (top-N representative comments)
+- LLM is called after filtering, not on raw data
 
-Output is strict JSON, ready for UI consumption
+- Input size is controlled (top-N representative comments)
+
+- Output is strict JSON, ready for UI consumption
 
 Output Structure
 {
@@ -267,25 +278,25 @@ Output Structure
   "recommended_actions": [...]
 }
 
-Evidence Rules
+#### Evidence Rules
 
-Evidence must be:
+- Evidence must be:
 
-Direct quotes
+-- Direct quotes
 
-Persian only
+-- Persian only
 
-Substrings of input comments
+-- Substrings of input comments
 
-Post-processing fixes invalid evidence automatically
+- Post-processing fixes invalid evidence automatically
 
-7. Design Philosophy & Constraints
+### 7. Design Philosophy & Constraints
 
-Each comment is processed once at ingestion time
+- Each comment is processed once at ingestion time
 
-Daily volume is low (≈ <100 comments/day)
+- Daily volume is low (≈ <100 comments/day)
 
-Pipeline prioritizes:
+- Pipeline prioritizes:
 
 Stability
 
@@ -293,9 +304,9 @@ Traceability
 
 Explainability
 
-Heavy LLM usage is avoided on raw data
+- Heavy LLM usage is avoided on raw data
 
-Current Capabilities
+### Current Capabilities
 
 ✔ Persistent sentiment labeling
 ✔ Duplicate detection
@@ -303,17 +314,17 @@ Current Capabilities
 ✔ Actionable summaries for business teams
 ✔ JSON outputs for dashboards and APIs
 
-Next Possible Extensions
+### Next Possible Extensions
 
-Per-title (feature-level) summaries
+- Per-title (feature-level) summaries
 
-Trend analysis over time (weekly / monthly)
+- Trend analysis over time (weekly / monthly)
 
-Alerting on high-risk outliers
+- Alerting on high-risk outliers
 
-Auto-generated Jira / backlog items
+- Auto-generated Jira / backlog items
 
-Topic clustering over summarized titles
+- Topic clustering over summarized titles
 
 
 
