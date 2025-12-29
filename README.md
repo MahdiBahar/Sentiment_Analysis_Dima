@@ -37,3 +37,8 @@ for pkg in ["punkt", "punkt_tab"]:
 # How to call insert data function in database?
 
 Ex: python main_import_comments_and_hash.py data/feedback_9-25-test-V0.1.csv
+
+
+# To solve the error about using google translate library:
+We use this:
+from deep_translator import GoogleTranslator

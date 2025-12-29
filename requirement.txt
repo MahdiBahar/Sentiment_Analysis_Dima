@@ -16,3 +16,5 @@ scikit-learn
 nltk
 #llm
 langchain_community
+#solve the http error problem for google translate
+deep-translator

@@ -1,12 +1,13 @@
 # Import libraries
 from transformers import MT5ForConditionalGeneration, MT5Tokenizer, pipeline
 import time
-from googletrans import Translator
+# from googletrans import Translator
 # Connect to database
 from connect_to_database_func import connect_db
 from dotenv import load_dotenv
 from logging_config import setup_logger  # Import logger setup function
 import os
+from deep_translator import GoogleTranslator
 # from main import logger
 
  #Completely remove proxy env vars for this process
@@ -14,8 +15,9 @@ for var in ["http_proxy", "https_proxy", "all_proxy", "HTTP_PROXY", "HTTPS_PROXY
     os.environ.pop(var, None)
 
 # Create Translator without proxies and without trusting env
-translator = Translator(proxies=None, raise_exception=False, http2=False)
-
+## using new way to solve google translate calling problem
+# translator = Translator(proxies=None, raise_exception=False, http2=False)
+translator = GoogleTranslator(source="auto", target="en")
 # Load environment variables from .env file
 load_dotenv()
 
@@ -33,7 +35,7 @@ logger.info("Loading Hugging Face sentiment classifier...")
 classifier = pipeline("sentiment-analysis", device=-1)
 
 # Initialize Google Translator
-translator = Translator()
+# translator = Translator()
 
 # Sentiment mapping for scoring
 SENTIMENT_SCORES = {
@@ -108,7 +110,9 @@ def run_model(context, text_b="نظر شما چیست", **generator_args):
 def run_second_model(comment_text):
     try:
         logger.debug(f"Running second model for text: {comment_text}")
-        translated_text = translator.translate(comment_text, dest="en").text
+        # for solving translation problem
+        translated_text = translator.translate(comment_text)
+        # translated_text = translator.translate(comment_text, dest="en").text
         if not translated_text:
             raise ValueError("Translation returned empty text.")
         
