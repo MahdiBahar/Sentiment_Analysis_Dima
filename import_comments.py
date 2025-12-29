@@ -23,6 +23,7 @@ class Comment:
     national_code_hash: str
     mobile_no_hash: str
     created_at: datetime
+    channel_code: str | None = None # add channel_code
     date: str | None = None  # currently unused (same as Go code)
 
 
@@ -112,12 +113,14 @@ def create_table(conn):
         second_model_processed BOOLEAN,
         is_repetitive BOOLEAN,
         duplicate_of INTEGER,
+        channel_code VARCHAR(50),
         UNIQUE(national_code_hash, created_at)
     );
 
     CREATE INDEX IF NOT EXISTS idx_comments_national_code_hash ON comments(national_code_hash);
     CREATE INDEX IF NOT EXISTS idx_comments_date ON comments(date);
     CREATE INDEX IF NOT EXISTS idx_comments_grade ON comments(grade);
+    CREATE INDEX IF NOT EXISTS idx_comments_channel_code ON comments(channel_code);
     """
     with conn.cursor() as cur:
         cur.execute(create_sql)
@@ -133,8 +136,7 @@ def parse_csv(filename: str) -> List[Comment]:
     """
     Expected columns (like Go):
     TITLE, GRADE, DESCRIPTION, NATIONAL_CODE, REAL_FIRST_NAME,
-    REAL_LAST_NAME, MOBILE_NO, CREATED_AT, <EXTRA (Date or Channel)>
-    Last column is ignored (same as Go, where Date is commented out).
+    REAL_LAST_NAME, MOBILE_NO, CREATED_AT, Channel>
     """
     comments: List[Comment] = []
 
@@ -155,7 +157,9 @@ def parse_csv(filename: str) -> List[Comment]:
             # row[4], row[5] = REAL_FIRST_NAME, REAL_LAST_NAME (ignored)
             mobile_no = row[6]
             created_at_str = row[7]
-            # row[8] = Date or Channel (ignored for now, like Go)
+            channel_code = row[8].strip() if len(row) > 8 else None
+            if channel_code == "":
+                channel_code = None
 
             # grade
             try:
@@ -178,6 +182,7 @@ def parse_csv(filename: str) -> List[Comment]:
                 national_code_hash=hash_string(national_code),
                 mobile_no_hash=hash_string(mobile_no) if mobile_no.strip() else "",
                 created_at=created_at,
+                channel_code=channel_code,
                 date=None,
             )
             comments.append(comment)
@@ -191,39 +196,43 @@ def parse_csv(filename: str) -> List[Comment]:
 # ----------------------------
 
 def insert_comments(conn, comments: List[Comment]):
-    """
-    Equivalent to Go insertComments:
-    - upsert on (national_code_hash, created_at)
-    - skip if two consecutive created_at values differ < 50 ms
-    """
     upsert_sql = """
     INSERT INTO comments (
-        title, grade, description, national_code_hash, created_at
-    ) VALUES (%s, %s, %s, %s, %s)
+        title,
+        grade,
+        description,
+        national_code_hash,
+        mobile_no_hash,
+        channel_code,
+        created_at
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
     ON CONFLICT (national_code_hash, created_at)
     DO UPDATE SET
         title = EXCLUDED.title,
         grade = EXCLUDED.grade,
         description = EXCLUDED.description,
+        mobile_no_hash = EXCLUDED.mobile_no_hash,
+        channel_code = COALESCE(comments.channel_code, EXCLUDED.channel_code),
+
         imported_at = CURRENT_TIMESTAMP;
     """
 
-    filtered_rows = []
-    for i, c in enumerate(comments):
-        if i > 0:
-            prev = comments[i - 1]
-            delta_ms = abs((c.created_at - prev.created_at).total_seconds() * 1000)
-            if delta_ms < 50:
-                # same logic as Go: skip if within 50 milliseconds
-                continue
-
-        filtered_rows.append(
-            (c.title, c.grade, c.description, c.national_code_hash, c.created_at)
+    rows = [
+        (
+            c.title,
+            c.grade,
+            c.description,
+            c.national_code_hash,
+            c.mobile_no_hash if c.mobile_no_hash else None,
+            c.channel_code,
+            c.created_at,
         )
+        for c in comments
+    ]
 
     with conn.cursor() as cur:
-        execute_batch(cur, upsert_sql, filtered_rows, page_size=1000)
+        execute_batch(cur, upsert_sql, rows, page_size=1000)
     conn.commit()
-    print(f"✅ Completed: {len(filtered_rows)} comments inserted/updated")
+    print(f"✅ Completed: {len(rows)} comments inserted/updated")
 
 

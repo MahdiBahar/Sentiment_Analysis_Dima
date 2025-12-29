@@ -32,3 +32,8 @@ for pkg in ["punkt", "punkt_tab"]:
         nltk.data.find(f"tokenizers/{pkg}")
     except LookupError:
         nltk.download(pkg, quiet=True)
+
+
+# How to call insert data function in database?
+
+Ex: python main_import_comments_and_hash.py data/feedback_9-25-test-V0.1.csv

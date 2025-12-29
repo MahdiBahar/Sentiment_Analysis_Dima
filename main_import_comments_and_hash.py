@@ -71,15 +71,15 @@ def main():
         print("Row count AFTER:", after_count)
 
         # 🔍 4) Show the 5 most recently imported rows
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT id, title, grade, description, national_code_hash,
-                       created_at, imported_at
-                FROM comments
-                ORDER BY imported_at DESC
-                LIMIT 11;
-            """)
-            print("Last 11 rows by imported_at:")
+        # with conn.cursor() as cur:
+        #     cur.execute("""
+        #         SELECT id, title, grade, description, national_code_hash,
+        #                created_at, imported_at
+        #         FROM comments
+        #         ORDER BY imported_at DESC
+        #         LIMIT 11;
+        #     """)
+        #     print("Last 11 rows by imported_at:")
             # for row in cur.fetchall():
             #     print(row)
 

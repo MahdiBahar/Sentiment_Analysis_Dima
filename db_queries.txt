@@ -1,0 +1,9 @@
+## For adding channel_code
+
+ALTER TABLE public.comments
+ADD COLUMN IF NOT EXISTS channel_code VARCHAR(50);
+
+CREATE INDEX IF NOT EXISTS idx_comments_channel_code
+ON public.comments(channel_code);
+
+#########################################################
