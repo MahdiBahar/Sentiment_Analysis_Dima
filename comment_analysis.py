@@ -52,3 +52,66 @@ def fetch_comments_to_analyze(limit=100):
     except Exception as e:
         logger.error(f"Error fetching comments: {e}", exc_info=True)
         return []
+
+
+#################################################################################\
+def upsert_comment_analysis(conn, analysis):
+    query = """
+        INSERT INTO comment_analysis (
+            comment_id,
+            created_at,
+            sentiment_result,
+            type,
+            category,
+            short_title,
+            normalized_title,
+            keywords,
+            severity,
+            priority,
+            evidence,
+            model,
+            processed_at
+        )
+        VALUES (
+            %(comment_id)s,
+            %(created_at)s,
+            %(sentiment_group)s,
+            %(type)s,
+            %(category)s,
+            %(short_title)s,
+            %(normalized_title)s,
+            %(keywords)s,
+            %(severity)s,
+            %(priority)s,
+            %(evidence)s,
+            %(model)s,
+            %(processed_at)s
+        )
+        ON CONFLICT (comment_id)
+        DO UPDATE SET
+            sentiment_result = EXCLUDED.sentiment_result,
+            type = EXCLUDED.type,
+            category = EXCLUDED.category,
+            short_title = EXCLUDED.short_title,
+            normalized_title = EXCLUDED.normalized_title,
+            keywords = EXCLUDED.keywords,
+            severity = EXCLUDED.severity,
+            priority = EXCLUDED.priority,
+            evidence = EXCLUDED.evidence,
+            model = EXCLUDED.model,
+            processed_at = EXCLUDED.processed_at;
+    """
+
+    with conn.cursor() as cur:
+        cur.execute(query, analysis)
+
+##########################################################################
+
+def mark_comment_as_analyzed(conn, comment_id):
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE comments SET is_analyzed = TRUE WHERE id = %s;",
+            (comment_id,)
+        )
+
+

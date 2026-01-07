@@ -13,7 +13,7 @@ llm = Ollama(
 )
 
 
-def call_phi4_single_comment(
+def call_LLM_single_comment(
     comment_id: str,
     comment_text: str,
     sentiment_group: str,
