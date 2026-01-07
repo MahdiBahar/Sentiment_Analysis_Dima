@@ -37,7 +37,7 @@ def fetch_comments_to_analyze(limit=100):
             {
                 "comment_id": r[0],
                 "comment_text": r[1],
-                "sentiment_group": r[2],
+                "sentiment_result": r[2],
                 "created_at": r[3],
             }
             for r in rows
@@ -75,7 +75,7 @@ def upsert_comment_analysis(conn, analysis):
         VALUES (
             %(comment_id)s,
             %(created_at)s,
-            %(sentiment_group)s,
+            %(sentiment_result)s,
             %(type)s,
             %(category)s,
             %(short_title)s,

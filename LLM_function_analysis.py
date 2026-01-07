@@ -2,7 +2,7 @@ from langchain_community.llms import Ollama
 from datetime import datetime, timezone
 import json
 import re
-
+from analyze_comments import logger
 
 
 
@@ -16,16 +16,16 @@ llm = Ollama(
 def call_LLM_single_comment(
     comment_id: str,
     comment_text: str,
-    sentiment_group: str,
+    sentiment_result: str,
     created_at: str,
     model: str,
     retries: int,
 ) -> str:
     prompt = LLM_SINGLE_COMMENT_PROMPT.format(
-        comment_id=comment_id,
-        created_at=created_at,
-        sentiment_group=sentiment_group,
-        model = model,
+        # comment_id=comment_id,
+        # created_at=created_at,
+        # sentiment_result=sentiment_result,
+        # model = model,
         comment_text=comment_text.strip()
     )
     for i in range(retries + 1):
@@ -57,16 +57,15 @@ Rules:
 Allowed values:
 
 type: issue | suggestion | question | praise | other
-category: transfer | auth | card | bill | loan | login | ui | performance | other
+category: transfer | auth | card | bill | loan | login | ui | performance | AI assistant | other
 severity / priority: high | medium | low | null
+
+- If unsure, use "other" for type and category.
 
 JSON format:
 
 {{
-  "comment_id": "{comment_id}",
-  "created_at": "{created_at}",
-  "sentiment_group": "{sentiment_group}",
-
+  
   "type": "",
   "category": "",
 
@@ -80,16 +79,17 @@ JSON format:
 
   "evidence": "",
 
-  "model": "{model}",
-  "processed_at": ""
+  
 }}
 
 Comment:
 {comment_text}
 """
 
-
-
+## "comment_id": "{comment_id}",
+## "created_at": "{created_at}",
+## "sentiment_result": "{sentiment_result}",
+##"model": "{model}",
 ##############################################################################################
 ALLOWED_TYPES = {"issue","suggestion","question","praise","other"}
 ALLOWED_CATEGORIES = {
@@ -110,11 +110,20 @@ def validate_output(obj: dict, original_text: str):
     # no English hallucination
     assert not re.search(r"[A-Za-z]", obj["evidence"])
 
+    if re.search(r"[A-Za-z]", obj["normalized_title"]):
+        logger.warning("English detected in normalized_title")
+
     for field in ["short_title", "normalized_title"]:
         assert not re.search(r"[A-Za-z]", obj[field]), f"English in {field}"
+        
 
     for kw in obj["keywords"]:
         assert not re.search(r"[A-Za-z]", kw), "English keyword detected"
+   
+    # assert 1 <= len(obj["keywords"]) <= 6
+    if not (1 <= len(obj["keywords"]) <= 6):
+        logger.warning("Invalid keyword count, normalizing")
+        obj["keywords"] = obj["keywords"][:6] or ["عمومی"]
 
 
     # title length
@@ -130,7 +139,8 @@ def extract_json(raw: str) -> dict:
     raw = raw.replace("```", "").strip()
 
     # Extract first JSON object
-    match = re.search(r"\{[\s\S]*\}", raw)
+    # match = re.search(r"\{[\s\S]*\}", raw)
+    match = re.search(r"\{[\s\S]*?\}", raw)
     if not match:
         raise ValueError(f"No JSON object found:\n{raw}")
 
