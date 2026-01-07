@@ -24,8 +24,8 @@ def fetch_comments_to_analyze(limit=100):
             WHERE
                 is_repetitive IS FALSE
                 AND is_analyzed IS FALSE
-                AND description IS NOT NULL
-                AND LENGTH(TRIM(description)) > 2
+                AND description IS NOT NULL 
+                AND TRIM(description) != ''
             ORDER BY id ASC
             LIMIT %s;
         """

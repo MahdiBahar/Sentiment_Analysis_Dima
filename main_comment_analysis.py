@@ -1,7 +1,7 @@
 from connect_to_database_func import connect_db
 from dotenv import load_dotenv
 from analyze_comments import fetch_comments_to_analyze,upsert_comment_analysis,mark_comment_as_analyzed, logger
-from LLM_function_analysis import call_LLM_single_comment, extract_json, validate_output
+from LLM_function_analysis import call_LLM_single_comment, extract_json, validate_output, normalize_for_match
 from datetime import datetime, timezone
 import json
 
@@ -16,7 +16,7 @@ def run_comment_analysis_batch(limit=100):
         return
 
     conn = connect_db()
-    DRY_RUN = True
+    DRY_RUN = False
     try:
         for c in comments:
             try:
@@ -25,7 +25,10 @@ def run_comment_analysis_batch(limit=100):
                 if c.get("is_analyzed"):
                     logger.info(f"This comment with {c['comment_id']} id is analyzed before")
                     continue
-
+                len_comment = normalize_for_match(text=c.get("comment_text")) 
+                if len(len_comment.split())<3:
+                    logger.info(f"The length of this comment with {c['comment_id']} id is {len(len_comment.split())}")
+                    continue
                 raw_analysis = call_LLM_single_comment(
                         comment_id=str(c["comment_id"]),
                         comment_text=c["comment_text"],
@@ -60,7 +63,7 @@ def run_comment_analysis_batch(limit=100):
                 validate_output(analysis, c["comment_text"])
 
 
-                logger.info(f"DRY_RUN = {DRY_RUN}")
+                # logger.info(f"DRY_RUN = {DRY_RUN}")
 
                 if DRY_RUN:
                    print(
@@ -75,8 +78,9 @@ def run_comment_analysis_batch(limit=100):
                 else:
                     with conn: 
                         upsert_comment_analysis(conn, analysis)
+                        logger.info(f"comment {c['comment_id']} is inserted to comment analysis table properly")
                         mark_comment_as_analyzed(conn, c["comment_id"])
-
+                        logger.info(f"comment {c['comment_id']} is changed to is_analyzed")
                         # conn.commit()
 
             except Exception as e:
