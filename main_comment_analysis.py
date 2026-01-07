@@ -1,15 +1,10 @@
 from connect_to_database_func import connect_db
 from dotenv import load_dotenv
-from logging_config import setup_logger  # Import logger setup function
-from comment_analysis import fetch_comments_to_analyze,upsert_comment_analysis,mark_comment_as_analyzed
+from analyze_comments import fetch_comments_to_analyze,upsert_comment_analysis,mark_comment_as_analyzed, logger
 from LLM_function_analysis import call_LLM_single_comment, extract_json, validate_output
 from datetime import datetime, timezone
 
 load_dotenv()
-
-# # Initialize logger
-logger = setup_logger(name="comment_analysis", log_file="comment_sentiment.log")
-
 
 
 def run_comment_analysis_batch(limit=100):
@@ -58,3 +53,9 @@ def run_comment_analysis_batch(limit=100):
         conn.close()
 
 
+if __name__ == "__main__":
+    logger.info("🚀 Starting comment analysis...")
+
+    run_comment_analysis_batch(limit=10)
+
+    logger.info("✅ comment analysis completed.")
