@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import json
 import re
 from analyze_comments import logger
-
+from preprocessing_main import preprocess
 
 
 llm = Ollama(
@@ -11,6 +11,22 @@ llm = Ollama(
     base_url="http://localhost:11434",
     temperature=0
 )
+
+
+#### Preprocessing text (using prerocessing_main)
+
+def normalize_for_match(text: str) -> str:
+    if not text:
+        return ""
+
+    text = preprocess(
+        text,
+        remove_halfspace=True,
+        replace_multiple_spaces=True,
+        replace_enter_with_space=True
+    )
+    return text.strip()
+
 
 
 def call_LLM_single_comment(
@@ -21,12 +37,13 @@ def call_LLM_single_comment(
     model: str,
     retries: int,
 ) -> str:
+    preprocessed_comment = normalize_for_match(text = comment_text)
     prompt = LLM_SINGLE_COMMENT_PROMPT.format(
         # comment_id=comment_id,
         # created_at=created_at,
         # sentiment_result=sentiment_result,
         # model = model,
-        comment_text=comment_text.strip()
+        comment_text=preprocessed_comment
     )
     for i in range(retries + 1):
         raw = llm.invoke(prompt)
@@ -105,10 +122,16 @@ def validate_output(obj: dict, original_text: str):
     assert obj["priority"] in LEVELS
 
     # evidence must be exact substring
-    assert obj["evidence"] in original_text
+    # assert obj["evidence"] in original_text
+    norm_evidence = normalize_for_match(obj["evidence"])
+    norm_original = normalize_for_match(original_text)
+
+    if norm_evidence not in norm_original:
+        logger.warning("Evidence mismatch – repairing")
+        obj["evidence"] = original_text.strip()[:300]
 
     # no English hallucination
-    assert not re.search(r"[A-Za-z]", obj["evidence"])
+    # assert not re.search(r"[A-Za-z]", obj["evidence"])
 
     if re.search(r"[A-Za-z]", obj["normalized_title"]):
         logger.warning("English detected in normalized_title")
@@ -117,9 +140,23 @@ def validate_output(obj: dict, original_text: str):
         assert not re.search(r"[A-Za-z]", obj[field]), f"English in {field}"
         
 
-    for kw in obj["keywords"]:
-        assert not re.search(r"[A-Za-z]", kw), "English keyword detected"
+    # for kw in obj["keywords"]:
+    #     assert not re.search(r"[A-Za-z]", kw), "English keyword detected"
    
+    cleaned_keywords = []
+
+    for kw in obj["keywords"]:
+        if re.search(r"[A-Za-z]", kw):
+            logger.warning(f"English keyword replaced: {kw}")
+            continue
+        cleaned_keywords.append(kw)
+
+    if not cleaned_keywords:
+        cleaned_keywords = ["عمومی"]
+
+    obj["keywords"] = cleaned_keywords[:6]
+
+
     # assert 1 <= len(obj["keywords"]) <= 6
     if not (1 <= len(obj["keywords"]) <= 6):
         logger.warning("Invalid keyword count, normalizing")

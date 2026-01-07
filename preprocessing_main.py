@@ -2,7 +2,7 @@
 from preprocessing_func import convert_fa_numbers, convert_ar_characters, convert_en_numbers,remove_phrases, add_space_punc, remove_space_after_words
 from preprocessing_func import  remove_diacritics, map_num_to_text, merge_mi_prefix, replace_multiple_space, remove_punctuation_except_keep
 from preprocessing_func import remove_half_space, remove_extra_charecter, remove_number, remove_punctuation, drop_short_sentences, replace_before_spaces_with_halfspace
-from preprocessing_func import remove_ha_s_suffix
+from preprocessing_func import remove_ha_s_suffix, replace_enter_space
 # import re
 
 
@@ -27,7 +27,8 @@ def preprocess(text,
                add_spaces_punc = False,
                remove_space_after_word = None,
                replace_before_space_with_half_space = None,
-               remove_ha_suffix = True
+               remove_ha_suffix = True,
+               replace_enter_with_space = False
                ):
     
     text = text.strip()
@@ -107,5 +108,9 @@ def preprocess(text,
 # remove ha suffix
     if remove_ha_suffix:
         text = remove_ha_s_suffix(text)
+
+#replace enter and tab with space
+    if replace_enter_with_space:
+        text = replace_enter_space (text)
 
     return(text)

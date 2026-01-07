@@ -40,9 +40,21 @@ def run_comment_analysis_batch(limit=100):
                     raise RuntimeError("LLM returned empty output")
 
                 analysis  = extract_json(raw_analysis)
+
+                # analysis["processed_at"] = datetime.now(timezone.utc).isoformat()
+
                 analysis["processed_at"] = datetime.now(timezone.utc).isoformat()
+
+                analysis["created_at"] = (
+                    c["created_at"].isoformat()
+                    if hasattr(c["created_at"], "isoformat")
+                    else c["created_at"]
+                )
+                # analysis["created_at"] = c["created_at"]
+
+
                 analysis["comment_id"] = c["comment_id"]
-                analysis["created_at"] = c["created_at"]
+                
                 analysis["sentiment_result"] = c["sentiment_result"]
                 analysis["model"] = model
                 validate_output(analysis, c["comment_text"])
@@ -51,7 +63,15 @@ def run_comment_analysis_batch(limit=100):
                 logger.info(f"DRY_RUN = {DRY_RUN}")
 
                 if DRY_RUN:
-                    print(json.dumps(analysis, ensure_ascii=False, indent=2))
+                   print(
+                            json.dumps(
+                                analysis,
+                                ensure_ascii=False,
+                                indent=2,
+                                default=str   # fallback for unexpected types
+                            )
+                        )
+
                 else:
                     with conn: 
                         upsert_comment_analysis(conn, analysis)
@@ -73,6 +93,6 @@ def run_comment_analysis_batch(limit=100):
 if __name__ == "__main__":
     logger.info("🚀 Starting comment analysis...")
 
-    run_comment_analysis_batch(limit=10)
+    run_comment_analysis_batch(limit=50)
 
     logger.info("✅ comment analysis completed.")
