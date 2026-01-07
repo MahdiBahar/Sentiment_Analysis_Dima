@@ -7,3 +7,39 @@ CREATE INDEX IF NOT EXISTS idx_comments_channel_code
 ON public.comments(channel_code);
 
 #########################################################
+-- Create comment_analysis table
+CREATE TABLE comment_analysis (
+    analysis_id SERIAL PRIMARY KEY,  
+    comment_id INTEGER NOT NULL,  
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    sentiment_result VARCHAR(50),
+    type VARCHAR(50),
+    category VARCHAR(100),
+    short_title TEXT,
+    normalized_title TEXT,
+    keywords TEXT[],
+    severity VARCHAR(20),
+    priority VARCHAR(20),
+    evidence TEXT,
+    model VARCHAR(50),
+    processed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    -- FOREIGN KEY
+    CONSTRAINT fk_comment
+        FOREIGN KEY (comment_id) 
+        REFERENCES comments(id) 
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE INDEX idx_comment_analysis_comment_id ON comment_analysis(comment_id);
+CREATE INDEX idx_comment_analysis_category ON comment_analysis(category);
+CREATE INDEX idx_comment_analysis_severity ON comment_analysis(severity);
+CREATE INDEX idx_comment_analysis_created_at ON comment_analysis(created_at);
+CREATE INDEX idx_comment_analysis_sentiment ON comment_analysis(sentiment_result);
+########################################################################################
+
+-- Add analysisng flag
+ALTER TABLE comments 
+ADD COLUMN is_analyzed BOOLEAN DEFAULT FALSE;
+CREATE INDEX idx_comments_is_analyzed ON comments(is_analyzed);
