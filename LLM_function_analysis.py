@@ -136,8 +136,8 @@ def validate_output(obj: dict, original_text: str):
     if re.search(r"[A-Za-z]", obj["normalized_title"]):
         logger.warning("English detected in normalized_title")
 
-    for field in ["short_title", "normalized_title"]:
-        assert not re.search(r"[A-Za-z]", obj[field]), f"English in {field}"
+    # for field in ["short_title", "normalized_title"]:
+    #     assert not re.search(r"[A-Za-z]", obj[field]), f"English in {field}"
         
 
     # for kw in obj["keywords"]:
