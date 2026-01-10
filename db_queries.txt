@@ -13,6 +13,7 @@ CREATE TABLE comment_analysis (
     comment_id INTEGER NOT NULL,  
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     sentiment_result VARCHAR(50),
+    title VARCHAR (255),
     type VARCHAR(50),
     category VARCHAR(100),
     short_title TEXT,
@@ -37,9 +38,10 @@ CREATE INDEX idx_comment_analysis_category ON comment_analysis(category);
 CREATE INDEX idx_comment_analysis_severity ON comment_analysis(severity);
 CREATE INDEX idx_comment_analysis_created_at ON comment_analysis(created_at);
 CREATE INDEX idx_comment_analysis_sentiment ON comment_analysis(sentiment_result);
+CREATE INDEX idx_comment_analysis_title ON comment_analysis(title);
 ########################################################################################
 
--- Add analysisng flag
+-- Add analyzing flag
 ALTER TABLE comments 
 ADD COLUMN is_analyzed BOOLEAN DEFAULT FALSE;
 CREATE INDEX idx_comments_is_analyzed ON comments(is_analyzed);

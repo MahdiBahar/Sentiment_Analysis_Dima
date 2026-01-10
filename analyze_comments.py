@@ -19,7 +19,8 @@ def fetch_comments_to_analyze(limit=100):
                 id,
                 description,
                 sentiment_result,
-                created_at
+                created_at,
+                title
             FROM comments
             WHERE
                 is_repetitive IS FALSE
@@ -39,6 +40,7 @@ def fetch_comments_to_analyze(limit=100):
                 "comment_text": r[1],
                 "sentiment_result": r[2],
                 "created_at": r[3],
+                "title": r[4]
             }
             for r in rows
         ]
@@ -61,6 +63,7 @@ def upsert_comment_analysis(conn, analysis):
             comment_id,
             created_at,
             sentiment_result,
+            title,
             type,
             category,
             short_title,
@@ -76,6 +79,7 @@ def upsert_comment_analysis(conn, analysis):
             %(comment_id)s,
             %(created_at)s,
             %(sentiment_result)s,
+            %(title)s,
             %(type)s,
             %(category)s,
             %(short_title)s,
@@ -90,6 +94,7 @@ def upsert_comment_analysis(conn, analysis):
         ON CONFLICT (comment_id)
         DO UPDATE SET
             sentiment_result = EXCLUDED.sentiment_result,
+            title = EXCLUDED.title,
             type = EXCLUDED.type,
             category = EXCLUDED.category,
             short_title = EXCLUDED.short_title,

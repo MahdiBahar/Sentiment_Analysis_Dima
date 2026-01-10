@@ -55,7 +55,7 @@ def run_comment_analysis_batch(limit=100):
                 )
                 # analysis["created_at"] = c["created_at"]
 
-
+                analysis["title"] = c["title"]
                 analysis["comment_id"] = c["comment_id"]
                 
                 analysis["sentiment_result"] = c["sentiment_result"]
@@ -97,6 +97,6 @@ def run_comment_analysis_batch(limit=100):
 if __name__ == "__main__":
     logger.info("🚀 Starting comment analysis...")
 
-    run_comment_analysis_batch(limit=50)
+    run_comment_analysis_batch(limit=10)
 
     logger.info("✅ comment analysis completed.")
