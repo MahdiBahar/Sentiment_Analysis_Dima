@@ -97,6 +97,6 @@ def run_comment_analysis_batch(limit=100):
 if __name__ == "__main__":
     logger.info("🚀 Starting comment analysis...")
 
-    run_comment_analysis_batch(limit=10)
+    run_comment_analysis_batch(limit=3000)
 
     logger.info("✅ comment analysis completed.")

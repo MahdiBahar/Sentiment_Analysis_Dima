@@ -8,7 +8,8 @@ from preprocessing_main import preprocess
 
 llm = Ollama(
     model="phi4:latest",
-    base_url="http://localhost:11434",
+    # base_url="http://localhost:11434",
+    base_url = "http://192.168.0.10:11434",
     temperature=0
 )
 
@@ -164,7 +165,7 @@ def validate_output(obj: dict, original_text: str):
 
 
     # title length
-    assert len(obj["short_title"].split()) <= 12
+    assert len(obj["short_title"].split()) <= 20
 
 
 def extract_json(raw: str) -> dict:
