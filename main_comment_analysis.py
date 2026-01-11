@@ -8,8 +8,8 @@ import json
 load_dotenv()
 
 
-def run_comment_analysis_batch(limit=100):
-    comments = fetch_comments_to_analyze(limit=limit)
+def run_comment_analysis_batch():
+    comments = fetch_comments_to_analyze()
 
     if not comments:
         logger.info("No comments to analyze.")
@@ -97,6 +97,6 @@ def run_comment_analysis_batch(limit=100):
 if __name__ == "__main__":
     logger.info("🚀 Starting comment analysis...")
 
-    run_comment_analysis_batch(limit=3000)
+    run_comment_analysis_batch()
 
     logger.info("✅ comment analysis completed.")

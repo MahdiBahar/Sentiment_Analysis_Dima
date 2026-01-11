@@ -8,7 +8,7 @@ load_dotenv()
 logger = setup_logger(name="comment_analysis", log_file="comment_sentiment.log")
 
 # Fetch comments that need sentiment analysis for a specific app
-def fetch_comments_to_analyze(limit=100):
+def fetch_comments_to_analyze():
     logger.info("Fetching comments from 'comments' table for LLM analysis.")
     try:
         conn = connect_db()
@@ -28,10 +28,10 @@ def fetch_comments_to_analyze(limit=100):
                 AND description IS NOT NULL 
                 AND TRIM(description) != ''
             ORDER BY id ASC
-            LIMIT %s;
+            
         """
 
-        cursor.execute(query, (limit,))
+        cursor.execute(query)
         rows = cursor.fetchall()
 
         comments = [
