@@ -53,3 +53,22 @@ CREATE INDEX idx_comments_is_analyzed ON comments(is_analyzed);
 
 ALTER TABLE comment_analysis
 ADD CONSTRAINT uq_comment_analysis_comment UNIQUE (comment_id);
+
+##################################################################################
+# For summarizing part
+CREATE TABLE summarized_analysis (
+    summarized_id SERIAL PRIMARY KEY,   
+    sentiment_result VARCHAR(50),
+    title VARCHAR (255),
+    type VARCHAR(50),
+    category VARCHAR(100),
+    summarized_comment TEXT,
+	count INT,
+    processed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW());
+
+CREATE INDEX idx_summarized_analysis_summarized_id ON summarized_analysis(summarized_id);
+CREATE INDEX idx_summarized_analysis_category ON summarized_analysis(category);
+CREATE INDEX idx_comment_analysis_type ON summarized_analysis(type);
+CREATE INDEX idx_comment_analysis_count ON summarized_analysis(count);
+CREATE INDEX idx_summarized_analysis_sentiment ON summarized_analysis(sentiment_result);
+CREATE INDEX idx_summarized_analysis_title ON summarized_analysis(title);

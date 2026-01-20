@@ -305,7 +305,7 @@ Explainability
 
 
 
-
+## Summarization
 
 
 
@@ -335,14 +335,14 @@ Last job: Reopen VScode
 #This is a new NLTK 3.8+ change: they split the sentence tokenizer model (punkt) into two parts —
 👉 punkt (base model)
 👉 punkt_tab (language-specific data tables)
-# Solution:
+##### Solution:
 
 import nltk
 
-# Add local path in case it's not found
+##### Add local path in case it's not found
 nltk.data.path.append("/home/mahdi/nltk_data")
 
-# Ensure both punkt and punkt_tab are available
+###### Ensure both punkt and punkt_tab are available
 for pkg in ["punkt", "punkt_tab"]:
     try:
         nltk.data.find(f"tokenizers/{pkg}")
@@ -350,11 +350,19 @@ for pkg in ["punkt", "punkt_tab"]:
         nltk.download(pkg, quiet=True)
 
 
-# How to call insert data function in database?
+##### How to call insert data function in database?
 
 Ex: python main_import_comments_and_hash.py data/feedback_9-25-test-V0.1.csv
 
 
-# To solve the error about using google translate library:
+##### To solve the error about using google translate library:
 We use this:
 from deep_translator import GoogleTranslator
+
+
+## Ideas
+### For AI assistant data
+1. We need to consider the number of likes and dislikes
+2. We have three questions after the user has decided to like or dislike the chat.
+3. We recored one turn after triger (question and answer for one turn)
+4. The third question is the part that user at give a comment
