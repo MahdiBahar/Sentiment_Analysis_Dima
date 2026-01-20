@@ -24,7 +24,7 @@ class Comment:
     mobile_no_hash: str
     created_at: datetime
     channel_code: str | None = None # add channel_code
-    date: str | None = None  # currently unused (same as Go code)
+    # date: str | None = None  # currently unused (same as Go code)
 
 
 # ----------------------------
@@ -98,7 +98,7 @@ def get_db_connection():
 
 def create_table(conn):
     create_sql = """
-    CREATE TABLE IF NOT EXISTS comments (
+    CREATE TABLE IF NOT EXISTS dima_comments (
         id SERIAL PRIMARY KEY,
         title VARCHAR(255),
         grade INTEGER,
@@ -106,7 +106,6 @@ def create_table(conn):
         national_code_hash VARCHAR(64) NOT NULL,
         mobile_no_hash VARCHAR(64),
         created_at TIMESTAMP NOT NULL,
-        date VARCHAR(50),
         imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         sentiment_result TEXT,
         sentiment_score INTEGER,
@@ -117,15 +116,15 @@ def create_table(conn):
         UNIQUE(national_code_hash, created_at)
     );
 
-    CREATE INDEX IF NOT EXISTS idx_comments_national_code_hash ON comments(national_code_hash);
-    CREATE INDEX IF NOT EXISTS idx_comments_date ON comments(date);
-    CREATE INDEX IF NOT EXISTS idx_comments_grade ON comments(grade);
-    CREATE INDEX IF NOT EXISTS idx_comments_channel_code ON comments(channel_code);
+    CREATE INDEX IF NOT EXISTS idx_comments_national_code_hash ON dima_comments(national_code_hash);
+    CREATE INDEX IF NOT EXISTS idx_comments_date ON dima_comments(date);
+    CREATE INDEX IF NOT EXISTS idx_comments_grade ON dima_comments(grade);
+    CREATE INDEX IF NOT EXISTS idx_comments_channel_code ON dima_comments(channel_code);
     """
     with conn.cursor() as cur:
         cur.execute(create_sql)
     conn.commit()
-    print("✅ Table 'comments' created or already exists")
+    print("✅ Table 'dima_comments' created or already exists")
 
 
 # ----------------------------
@@ -183,7 +182,7 @@ def parse_csv(filename: str) -> List[Comment]:
                 mobile_no_hash=hash_string(mobile_no) if mobile_no.strip() else "",
                 created_at=created_at,
                 channel_code=channel_code,
-                date=None,
+                # date=None,
             )
             comments.append(comment)
 
@@ -197,7 +196,7 @@ def parse_csv(filename: str) -> List[Comment]:
 
 def insert_comments(conn, comments: List[Comment]):
     upsert_sql = """
-    INSERT INTO comments (
+    INSERT INTO dima_comments (
         title,
         grade,
         description,

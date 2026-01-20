@@ -55,7 +55,7 @@ def main():
 
         # 🔍 2) Count rows BEFORE import
         with conn.cursor() as cur:
-            cur.execute("SELECT count(*) FROM comments;")
+            cur.execute("SELECT count(*) FROM dima_comments;")
             before_count = cur.fetchone()[0]
         print("Row count BEFORE:", before_count)
 
@@ -66,7 +66,7 @@ def main():
 
         # 🔍 3) Count rows AFTER import
         with conn.cursor() as cur:
-            cur.execute("SELECT count(*) FROM comments;")
+            cur.execute("SELECT count(*) FROM dima_comments;")
             after_count = cur.fetchone()[0]
         print("Row count AFTER:", after_count)
 

@@ -1,10 +1,10 @@
 ## For adding channel_code
 
-ALTER TABLE public.comments
+ALTER TABLE public.dima_comments
 ADD COLUMN IF NOT EXISTS channel_code VARCHAR(50);
 
 CREATE INDEX IF NOT EXISTS idx_comments_channel_code
-ON public.comments(channel_code);
+ON public.dima_comments(channel_code);
 
 #########################################################
 -- Create comment_analysis table
@@ -28,7 +28,7 @@ CREATE TABLE comment_analysis (
     -- FOREIGN KEY
     CONSTRAINT fk_comment
         FOREIGN KEY (comment_id) 
-        REFERENCES comments(id) 
+        REFERENCES dima_comments(id) 
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -42,9 +42,9 @@ CREATE INDEX idx_comment_analysis_title ON comment_analysis(title);
 ########################################################################################
 
 -- Add analyzing flag
-ALTER TABLE comments 
+ALTER TABLE dima_comments 
 ADD COLUMN is_analyzed BOOLEAN DEFAULT FALSE;
-CREATE INDEX idx_comments_is_analyzed ON comments(is_analyzed);
+CREATE INDEX idx_comments_is_analyzed ON dima_comments(is_analyzed);
 
 
 ################################################################################
@@ -72,3 +72,11 @@ CREATE INDEX idx_comment_analysis_type ON summarized_analysis(type);
 CREATE INDEX idx_comment_analysis_count ON summarized_analysis(count);
 CREATE INDEX idx_summarized_analysis_sentiment ON summarized_analysis(sentiment_result);
 CREATE INDEX idx_summarized_analysis_title ON summarized_analysis(title);
+
+##################################################################################
+-- How to drop and rename tables in the dima_data database
+DROP TABLE transactions;
+
+ALTER TABLE comments TO dima_comments;
+
+ALTER TABLE dima_comments DROP COLUMN IF EXISTS date;

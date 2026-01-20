@@ -23,7 +23,7 @@ def fetch_comments(sentiment=None, min_len=2, limit=None):
 
     base = """
         SELECT id, title, grade, description, COALESCE(sentiment_result, '') as sentiment_result
-        FROM comments
+        FROM dima_comments
         WHERE description IS NOT NULL 
             AND is_repetitive = FALSE
            AND sentiment_score >0

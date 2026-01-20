@@ -12,7 +12,7 @@ def flag_repetitive_comments():
         # Step 1️⃣: Reset repetitive flags in the database
         conn = connect_db()
         cur = conn.cursor()
-        cur.execute("UPDATE comments SET is_repetitive = FALSE, duplicate_of = NULL;")
+        cur.execute("UPDATE dima_comments SET is_repetitive = FALSE, duplicate_of = NULL;")
         conn.commit()
         cur.close()
         conn.close()
@@ -22,7 +22,7 @@ def flag_repetitive_comments():
         conn = connect_db()
         query = """
             SELECT id, national_code_hash, title, description, created_at, sentiment_result
-            FROM comments
+            FROM dima_comments
             WHERE description IS NOT NULL
             ORDER BY national_code_hash, created_at;
         """
@@ -90,7 +90,7 @@ def flag_repetitive_comments():
         ]
 
         cur.executemany(
-            "UPDATE comments SET is_repetitive = %s, duplicate_of = %s WHERE id = %s;",
+            "UPDATE dima_comments SET is_repetitive = %s, duplicate_of = %s WHERE id = %s;",
             update_data
         )
 

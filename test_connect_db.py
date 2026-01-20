@@ -15,11 +15,11 @@ def fetch_data(query):
 def test_connect_and_get_data():
     result = fetch_data("SELECT 1;")
     assert result[0][0] == 1
-    row = fetch_data("SELECT * FROM comments LIMIT 1;")
+    row = fetch_data("SELECT * FROM dima_comments LIMIT 1;")
     print(row)
 
 def fetch_comments():
-    query = "SELECT id, description,created_at FROM comments LIMIT 100;"
+    query = "SELECT id, description,created_at FROM dima_comments LIMIT 100;"
     data = fetch_data(query)
     df = pd.DataFrame(data, columns=["id", "description", "created_at"])  # Adjust columns to match your table
     return df

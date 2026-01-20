@@ -49,15 +49,15 @@ SENTIMENT_SCORES = {
     "no comments" : 0
 }
 
-# Fetch comments that need sentiment analysis for a specific app
+# Fetch dima_comments that need sentiment analysis for a specific app
 def fetch_comments_to_analyze(limit=100):
-    logger.info("Fetching comments from 'comments' table where sentiment not analyzed yet.")
+    logger.info("Fetching comments from 'dima_comments' table where sentiment not analyzed yet.")
     try:
         conn = connect_db()
         cursor = conn.cursor()
         query = """
             SELECT id, description, grade
-            FROM comments
+            FROM dima_comments
             WHERE sentiment_result IS NULL
             ORDER BY id ASC
             LIMIT %s;
@@ -79,7 +79,7 @@ def update_sentiment(id, sentiment_result, sentiment_score, second_model_process
         conn = connect_db()
         cursor = conn.cursor()
         query = """
-            UPDATE comments
+            UPDATE dima_comments
             SET sentiment_result = %s, sentiment_score = %s, second_model_processed = %s
             WHERE id = %s;
         """
@@ -134,7 +134,7 @@ def validate_and_score_sentiment(sentiment_result):
     sentiment_score = SENTIMENT_SCORES[sentiment_result]
     logger.debug(f"Validated sentiment: {sentiment_result}, Score: {sentiment_score}")
     return sentiment_result, sentiment_score
-# Main function to fetch comments for a specific app_id and update sentiments
+# Main function to fetch comments for dima application and update sentiments
 def analyze_and_update_sentiment(comments):
     logger.info("Starting sentiment analysis")
     for comment_id, comment_text, comment_rating in comments:

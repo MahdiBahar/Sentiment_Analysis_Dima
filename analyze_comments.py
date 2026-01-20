@@ -7,9 +7,9 @@ load_dotenv()
 # # Initialize logger
 logger = setup_logger(name="comment_analysis", log_file="comment_sentiment.log")
 
-# Fetch comments that need sentiment analysis for a specific app
+# Fetch dima_comments that need sentiment analysis for a specific app
 def fetch_comments_to_analyze():
-    logger.info("Fetching comments from 'comments' table for LLM analysis.")
+    logger.info("Fetching comments from 'dima_comments' table for LLM analysis.")
     try:
         conn = connect_db()
         cursor = conn.cursor()
@@ -21,7 +21,7 @@ def fetch_comments_to_analyze():
                 sentiment_result,
                 created_at,
                 title
-            FROM comments
+            FROM dima_comments
             WHERE
                 is_repetitive IS FALSE
                 AND is_analyzed IS FALSE
