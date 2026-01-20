@@ -59,7 +59,7 @@ def fetch_comments_to_analyze():
 #################################################################################\
 def upsert_comment_analysis(conn, analysis):
     query = """
-        INSERT INTO comment_analysis (
+        INSERT INTO dima_comment_analysis (
             comment_id,
             created_at,
             sentiment_result,
