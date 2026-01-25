@@ -7,8 +7,8 @@ CREATE INDEX IF NOT EXISTS idx_comments_channel_code
 ON public.dima_comments(channel_code);
 
 #########################################################
--- Create dima_comment_analysis table
-CREATE TABLE dima_comment_analysis (
+-- Create dima_comments_analysis table
+CREATE TABLE dima_comments_analysis (
     analysis_id SERIAL PRIMARY KEY,  
     comment_id INTEGER NOT NULL,  
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -33,12 +33,12 @@ CREATE TABLE dima_comment_analysis (
         ON UPDATE CASCADE
 );
 
-CREATE INDEX idx_comment_analysis_comment_id ON dima_comment_analysis(comment_id);
-CREATE INDEX idx_comment_analysis_category ON dima_comment_analysis(category);
-CREATE INDEX idx_comment_analysis_severity ON dima_comment_analysis(severity);
-CREATE INDEX idx_comment_analysis_created_at ON dima_comment_analysis(created_at);
-CREATE INDEX idx_comment_analysis_sentiment ON dima_comment_analysis(sentiment_result);
-CREATE INDEX idx_comment_analysis_title ON dima_comment_analysis(title);
+CREATE INDEX idx_comment_analysis_comment_id ON dima_comments_analysis(comment_id);
+CREATE INDEX idx_comment_analysis_category ON dima_comments_analysis(category);
+CREATE INDEX idx_comment_analysis_severity ON dima_comments_analysis(severity);
+CREATE INDEX idx_comment_analysis_created_at ON dima_comments_analysis(created_at);
+CREATE INDEX idx_comment_analysis_sentiment ON dima_comments_analysis(sentiment_result);
+CREATE INDEX idx_comment_analysis_title ON dima_comments_analysis(title);
 ########################################################################################
 
 -- Add analyzing flag
@@ -51,12 +51,12 @@ CREATE INDEX idx_comments_is_analyzed ON dima_comments(is_analyzed);
 --Strong recommendation (very important)
 --Add a UNIQUE constraint
 
-ALTER TABLE dima_comment_analysis
+ALTER TABLE dima_comments_analysis
 ADD CONSTRAINT uq_comment_analysis_comment UNIQUE (comment_id);
 
 ##################################################################################
 # For summarizing part
-CREATE TABLE dima_summarized_analysis (
+CREATE TABLE dima_comments_summarization (
     summarized_id SERIAL PRIMARY KEY,   
     sentiment_result VARCHAR(50),
     title VARCHAR (255),
@@ -66,12 +66,12 @@ CREATE TABLE dima_summarized_analysis (
 	count INT,
     processed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW());
 
-CREATE INDEX idx_summarized_analysis_summarized_id ON dima_summarized_analysis(summarized_id);
-CREATE INDEX idx_summarized_analysis_category ON dima_summarized_analysis(category);
-CREATE INDEX idx_summarized_analysis_type ON dima_summarized_analysis(type);
-CREATE INDEX idx_summarized_analysis_count ON dima_summarized_analysis(count);
-CREATE INDEX idx_summarized_analysis_sentiment ON dima_summarized_analysis(sentiment_result);
-CREATE INDEX idx_summarized_analysis_title ON dima_summarized_analysis(title);
+CREATE INDEX idx_summarized_analysis_summarized_id ON dima_comments_summarization(summarized_id);
+CREATE INDEX idx_summarized_analysis_category ON dima_comments_summarization(category);
+CREATE INDEX idx_summarized_analysis_type ON dima_comments_summarization(type);
+CREATE INDEX idx_summarized_analysis_count ON dima_comments_summarization(count);
+CREATE INDEX idx_summarized_analysis_sentiment ON dima_comments_summarization(sentiment_result);
+CREATE INDEX idx_summarized_analysis_title ON dima_comments_summarization(title);
 
 ##################################################################################
 -- How to drop and rename tables in the dima_data database
