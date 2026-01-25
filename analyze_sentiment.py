@@ -8,7 +8,11 @@ from dotenv import load_dotenv
 from logging_config import setup_logger  # Import logger setup function
 import os
 from deep_translator import GoogleTranslator
-# from main import logger
+
+
+# # Initialize logger
+logger = setup_logger(name="sentiment_analysis", log_file="analyze_sentiment.log")
+
 
  #Completely remove proxy env vars for this process
 for var in ["http_proxy", "https_proxy", "all_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY"]:
@@ -21,8 +25,6 @@ translator = GoogleTranslator(source="auto", target="en")
 # Load environment variables from .env file
 load_dotenv()
 
-# # Initialize logger
-logger = setup_logger(name="sentiment_analysis", log_file="analyze_sentiment.log")
 
 # Load the tokenizer and model
 logger.info("Loading MT5 model and tokenizer...")

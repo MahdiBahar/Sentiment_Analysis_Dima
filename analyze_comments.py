@@ -5,7 +5,7 @@ from logging_config import setup_logger  # Import logger setup function
 load_dotenv()
 
 # # Initialize logger
-logger = setup_logger(name="comment_analysis", log_file="comment_sentiment.log")
+logger = setup_logger(name="comment_analysis", log_file="dima_comments_analysis.log")
 
 # Fetch dima_comments that need sentiment analysis for a specific app
 def fetch_comments_to_analyze():
