@@ -43,36 +43,72 @@ def hash_string(value: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
+# def parse_timestamp(ts: str) -> datetime:
+#     """
+#     Support multiple timestamp formats:
+#     - Go-style: 2025-10-09-05.23.59.877774
+#     - 12h clock without seconds: 11/29/25 12:05 AM
+#     - 12h clock with 4-digit year: 11/29/2025 12:05 AM
+#     - 24h clock with/without seconds: 11/29/2025 00:05:18
+#     """
+#     ts = ts.strip()
+
+#     # 1) Try Go-style: 2025-10-09-05.23.59.877774
+#     parts = ts.split("-", 3)
+#     if len(parts) == 4 and "." in parts[3]:
+#         year, month, day, time_part = parts
+#         # replace first 2 dots with colon: 05.23.59.877774 -> 05:23:59.877774
+#         time_part = time_part.replace(".", ":", 2)
+#         ts_norm = f"{year}-{month}-{day} {time_part}"
+#         try:
+#             return datetime.strptime(ts_norm, "%Y-%m-%d %H:%M:%S.%f")
+#         except ValueError:
+#             pass  # fall through to other formats
+
+#     # 2) Try a list of known formats
+#     formats = [
+#         "%m/%d/%y %I:%M %p",    # 11/29/25 12:05 AM
+#         "%m/%d/%Y %I:%M %p",    # 11/29/2025 12:05 AM
+#         "%m/%d/%y %H:%M",       # 11/29/25 00:05
+#         "%m/%d/%Y %H:%M",       # 11/29/2025 00:05
+#         "%m/%d/%y %H:%M:%S",    # 11/29/25 00:05:18
+#         "%m/%d/%Y %H:%M:%S",    # 11/29/2025 00:05:18  ← your current format
+#     ]
+
+#     for fmt in formats:
+#         try:
+#             return datetime.strptime(ts, fmt)
+#         except ValueError:
+#             continue
+
+#     # 3) If nothing matched, fail loudly (your log will show this)
+#     raise ValueError(f"Unsupported timestamp format: {ts}")
+
+
+
 def parse_timestamp(ts: str) -> datetime:
-    """
-    Support multiple timestamp formats:
-    - Go-style: 2025-10-09-05.23.59.877774
-    - 12h clock without seconds: 11/29/25 12:05 AM
-    - 12h clock with 4-digit year: 11/29/2025 12:05 AM
-    - 24h clock with/without seconds: 11/29/2025 00:05:18
-    """
     ts = ts.strip()
 
-    # 1) Try Go-style: 2025-10-09-05.23.59.877774
-    parts = ts.split("-", 3)
-    if len(parts) == 4 and "." in parts[3]:
-        year, month, day, time_part = parts
-        # replace first 2 dots with colon: 05.23.59.877774 -> 05:23:59.877774
-        time_part = time_part.replace(".", ":", 2)
-        ts_norm = f"{year}-{month}-{day} {time_part}"
+    # Go-style: 2025-12-24-00.02.26.367590
+    if len(ts) >= 23 and ts[10] == "-" and "." in ts:
         try:
-            return datetime.strptime(ts_norm, "%Y-%m-%d %H:%M:%S.%f")
+            date_part, time_part = ts[:10], ts[11:]
+            time_part = time_part.replace(".", ":", 2)
+            dt = datetime.strptime(
+                f"{date_part} {time_part}",
+                "%Y-%m-%d %H:%M:%S.%f"
+            )
+            return dt.replace(microsecond=0)
         except ValueError:
-            pass  # fall through to other formats
+            pass
 
-    # 2) Try a list of known formats
     formats = [
-        "%m/%d/%y %I:%M %p",    # 11/29/25 12:05 AM
-        "%m/%d/%Y %I:%M %p",    # 11/29/2025 12:05 AM
-        "%m/%d/%y %H:%M",       # 11/29/25 00:05
-        "%m/%d/%Y %H:%M",       # 11/29/2025 00:05
-        "%m/%d/%y %H:%M:%S",    # 11/29/25 00:05:18
-        "%m/%d/%Y %H:%M:%S",    # 11/29/2025 00:05:18  ← your current format
+        "%m/%d/%y %I:%M %p",
+        "%m/%d/%Y %I:%M %p",
+        "%m/%d/%y %H:%M",
+        "%m/%d/%Y %H:%M",
+        "%m/%d/%y %H:%M:%S",
+        "%m/%d/%Y %H:%M:%S",
     ]
 
     for fmt in formats:
@@ -81,7 +117,6 @@ def parse_timestamp(ts: str) -> datetime:
         except ValueError:
             continue
 
-    # 3) If nothing matched, fail loudly (your log will show this)
     raise ValueError(f"Unsupported timestamp format: {ts}")
 
 
@@ -117,7 +152,6 @@ def create_table(conn):
     );
 
     CREATE INDEX IF NOT EXISTS idx_comments_national_code_hash ON dima_comments(national_code_hash);
-    CREATE INDEX IF NOT EXISTS idx_comments_date ON dima_comments(date);
     CREATE INDEX IF NOT EXISTS idx_comments_grade ON dima_comments(grade);
     CREATE INDEX IF NOT EXISTS idx_comments_channel_code ON dima_comments(channel_code);
     """
@@ -211,7 +245,7 @@ def insert_comments(conn, comments: List[Comment]):
         grade = EXCLUDED.grade,
         description = EXCLUDED.description,
         mobile_no_hash = EXCLUDED.mobile_no_hash,
-        channel_code = COALESCE(comments.channel_code, EXCLUDED.channel_code),
+        channel_code = COALESCE(dima_comments.channel_code, EXCLUDED.channel_code),
 
         imported_at = CURRENT_TIMESTAMP;
     """
