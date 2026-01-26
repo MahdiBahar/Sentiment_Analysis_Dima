@@ -8,6 +8,9 @@ from dotenv import load_dotenv
 from logging_config import setup_logger  # Import logger setup function
 import os
 from deep_translator import GoogleTranslator
+## For using local models
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+os.environ["HF_DATASETS_OFFLINE"] = "1"
 
 
 # # Initialize logger
@@ -29,12 +32,36 @@ load_dotenv()
 # Load the tokenizer and model
 logger.info("Loading MT5 model and tokenizer...")
 model_name = "persiannlp/mt5-base-parsinlu-sentiment-analysis"
-tokenizer = MT5Tokenizer.from_pretrained(model_name)
-model = MT5ForConditionalGeneration.from_pretrained(model_name)
+# tokenizer = MT5Tokenizer.from_pretrained(model_name)
+# model = MT5ForConditionalGeneration.from_pretrained(model_name)
+
+# For localize the first model
+tokenizer = MT5Tokenizer.from_pretrained(
+    model_name,
+    local_files_only=True
+)
+
+model = MT5ForConditionalGeneration.from_pretrained(
+    model_name,
+    local_files_only=True
+)
+
+
 
 # Load the second model (Hugging Face pipeline)
 logger.info("Loading Hugging Face sentiment classifier...")
-classifier = pipeline("sentiment-analysis", device=-1)
+# classifier = pipeline("sentiment-analysis", device=-1)
+
+## For localize the second model
+classifier = pipeline(
+    "sentiment-analysis",
+    model="/home/mahdi/.cache/huggingface/hub/models--distilbert-base-uncased-finetuned-sst-2-english/snapshots/714eb0fa89d2f80546fda750413ed43d93601a13",
+    tokenizer="/home/mahdi/.cache/huggingface/hub/models--distilbert-base-uncased-finetuned-sst-2-english/snapshots/714eb0fa89d2f80546fda750413ed43d93601a13",
+    device=-1
+)
+
+
+
 
 # Initialize Google Translator
 # translator = Translator()
