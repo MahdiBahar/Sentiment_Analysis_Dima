@@ -84,3 +84,30 @@ ALTER TABLE dima_comments DROP COLUMN IF EXISTS date;
 ALTER TABLE comment_analysis rename TO dima_comments_analysis;
 
 ALTER TABLE summarized_analysis rename TO dima_comments_summarization;
+
+###################################################################################
+
+# For AI Assistant part
+CREATE TABLE dima_AI_assistant (
+    turn_id SERIAL PRIMARY KEY,   
+    user_message TEXT,
+    assistant_message TEXT,
+    is_liked BOOLEAN,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    Q1 VARCHAR(255),
+    Q2 VARCHAR(255),
+    Q3 TEXT);
+
+-- CREATE INDEX idx_dima_AI_assistant_turn_id ON dima_AI_assistant(turn_id);
+-- CREATE INDEX idx_dima_AI_assistant_user_message ON dima_AI_assistant(user_message);
+-- CREATE INDEX idx_dima_AI_assistant_assistant_message ON dima_AI_assistant(assistant_message);
+CREATE INDEX idx_dima_AI_assistant_is_liked ON dima_AI_assistant(is_liked);
+-- CREATE INDEX idx_dima_AI_assistant_created_at ON dima_AI_assistant(created_at);
+CREATE INDEX idx_dima_AI_assistant_Q1 ON dima_AI_assistant(Q1);
+CREATE INDEX idx_dima_AI_assistant_Q2 ON dima_AI_assistant(Q2);
+
+
+######################################################################################
+
+ALTER TABLE dima_AI_assistant
+ADD CONSTRAINT unique_message_time UNIQUE (user_message, created_at);
