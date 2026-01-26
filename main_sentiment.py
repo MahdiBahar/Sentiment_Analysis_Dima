@@ -6,6 +6,13 @@ from repetitive_detection import flag_repetitive_comments
 from analyze_sentiment import logger
 
 if __name__ == "__main__":
+
+
+    logger.info("✅ Checking for repetitive new comments...")
+
+    count = flag_repetitive_comments()
+    logger.info(f"✅ Duplicate detection finished. Flagged {count} new repetitive comments.")
+
     logger.info("🚀 Starting sentiment analysis...")
 
     while True:
@@ -14,7 +21,4 @@ if __name__ == "__main__":
             break
         analyze_and_update_sentiment(comments)
 
-    logger.info("✅ Sentiment analysis completed. Now checking for repetitive comments...")
-
-    count = flag_repetitive_comments()
-    logger.info(f"✅ Duplicate detection finished. Flagged {count} repetitive comments.")
+    logger.info(f"✅ Sentiment analysis is finished")

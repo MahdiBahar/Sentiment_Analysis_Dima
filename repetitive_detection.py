@@ -9,21 +9,21 @@ def flag_repetitive_comments():
     using psycopg2 (with duplicate_of support and title matching).
     """
     try:
-        # Step 1️⃣: Reset repetitive flags in the database
-        conn = connect_db()
-        cur = conn.cursor()
-        cur.execute("UPDATE dima_comments SET is_repetitive = FALSE, duplicate_of = NULL;")
-        conn.commit()
-        cur.close()
-        conn.close()
-        print("🔄 Reset all previous repetitive flags to FALSE and duplicate_of to NULL.")
+        # # Step 1️⃣: Reset repetitive flags in the database
+        # conn = connect_db()
+        # cur = conn.cursor()
+        # cur.execute("UPDATE dima_comments SET is_repetitive = FALSE, duplicate_of = NULL;")
+        # conn.commit()
+        # cur.close()
+        # conn.close()
+        # print("🔄 Reset all previous repetitive flags to FALSE and duplicate_of to NULL.")
 
         # Step 2️⃣: Fetch required data (including title)
         conn = connect_db()
         query = """
             SELECT id, national_code_hash, title, description, created_at, sentiment_result
             FROM dima_comments
-            WHERE description IS NOT NULL
+            WHERE description IS NOT NULL AND description != '' AND sentiment_result is NULL
             ORDER BY national_code_hash, created_at;
         """
         df = pd.read_sql(query, conn)
@@ -98,7 +98,7 @@ def flag_repetitive_comments():
         conn.close()
 
         repetitive_count = int(df["is_repetitive"].sum())
-        print(f"✅ Repetitive detection completed. Flagged {repetitive_count} comments as repetitive.")
+        print(f"✅ Repetitive detection completed. Flagged {repetitive_count} new comments as repetitive.")
         return repetitive_count
 
     except Exception as e:
