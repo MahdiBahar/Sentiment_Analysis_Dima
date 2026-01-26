@@ -93,7 +93,7 @@ CREATE TABLE dima_AI_assistant (
     user_message TEXT,
     assistant_message TEXT,
     is_liked BOOLEAN,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     Q1 VARCHAR(255),
     Q2 VARCHAR(255),
     Q3 TEXT);
@@ -111,3 +111,10 @@ CREATE INDEX idx_dima_AI_assistant_Q2 ON dima_AI_assistant(Q2);
 
 ALTER TABLE dima_AI_assistant
 ADD CONSTRAINT unique_message_time UNIQUE (user_message, created_at);
+
+######################################################################################
+#Eliminate time zone in AI_assistant table
+
+ALTER TABLE dima_ai_assistant
+ALTER COLUMN created_at TYPE TIMESTAMP
+USING created_at::timestamp;
