@@ -79,13 +79,15 @@ def parse_csv(filename: str) -> List[AI_assistant]:
             if len(row) < 8:
                 print(f"⚠️  Skipping line {line_num}: insufficient columns ({len(row)} < 8)")
                 continue
+             
+             # for the first version of input csv file
 
-            user_message = row[0]
-            assistant_message = row[1]
-            is_liked = row[2].lower() == "true"
-            created_at_str = row[7]
-            Q1 = row[4]
-            Q2 = row[5]
+            user_message = row[1]
+            assistant_message = row[2]
+            is_liked = row[3].lower() == "true"
+            created_at_str = row[8]
+            Q1 = row[5]
+            Q2 = row[7]
             Q3 = row[6]
             
             # timestamp
@@ -95,6 +97,24 @@ def parse_csv(filename: str) -> List[AI_assistant]:
             except ValueError as e:
                 print(f"⚠️  Line {line_num}: invalid timestamp '{created_at_str}': {e}, skipping")
                 continue
+
+            # for the second version of input csv
+            # user_message = row[0]
+            # assistant_message = row[1]
+            # is_liked = row[2].lower() == "true"
+            # created_at_str = row[7]
+            # Q1 = row[4]
+            # Q2 = row[5]
+            # Q3 = row[6]
+            
+            # # timestamp
+            # try:
+            #     # created_at = parse_timestamp(created_at_str)
+            #     created_at = created_at_str
+            # except ValueError as e:
+            #     print(f"⚠️  Line {line_num}: invalid timestamp '{created_at_str}': {e}, skipping")
+            #     continue
+
 
             comment = AI_assistant(
                 user_message=user_message,
