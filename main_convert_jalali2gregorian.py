@@ -1,4 +1,4 @@
-from convert_jalali_to_gregorian_func import parse_timestamp, persian_to_gregorian
+from convert_date_AI_aasistant.convert_jalali_to_gregorian_func import parse_timestamp, persian_to_gregorian
 
 
 from datetime import datetime
@@ -8,8 +8,8 @@ from datetime import datetime
 import csv
 from datetime import datetime
 
-INPUT_CSV = "AI_assistant_15Aban_30Dey_test.csv"
-OUTPUT_CSV = "AI_assistant_15Mehr_2Aban_converted_date.csv"
+INPUT_CSV = "./convert_date_AI_aasistant/AI_assistant_15Aban_30Dey_test.csv"
+OUTPUT_CSV = "./convert_date_AI_aasistant/AI_assistant_15Mehr_2Aban_converted_date.csv"
 
 with open(INPUT_CSV, newline="", encoding="utf-8") as infile, \
      open(OUTPUT_CSV, "w", newline="", encoding="utf-8") as outfile:
