@@ -9,6 +9,9 @@ __pycache__/
 /data
 /results
 /docs
+/logs
+/convert_date_AI_aasistant
+*.jsonl
 # Distribution / packaging
 .Python
 build/
