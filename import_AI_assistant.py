@@ -62,7 +62,22 @@ def create_table(conn):
 #  CSV parsing
 # ----------------------------
 
-def parse_csv(filename: str) -> List[AI_assistant]:
+# for converting like and dislike to true and false for the first type of csv data
+def parse_is_liked(value: str | None) -> bool | None:
+    if not value:
+        return None
+
+    value = value.strip().upper()
+
+    if value == "LIKE":
+        return True
+    if value == "DISLIKE":
+        return False
+
+    raise ValueError(f"Invalid is_liked value: {value}")
+
+
+def parse_csv(filename: str, type_csv=0) -> List[AI_assistant]:
     """
     Expected columns (like Go):
     TITLE, GRADE, DESCRIPTION, NATIONAL_CODE, REAL_FIRST_NAME,
@@ -80,40 +95,48 @@ def parse_csv(filename: str) -> List[AI_assistant]:
                 print(f"⚠️  Skipping line {line_num}: insufficient columns ({len(row)} < 8)")
                 continue
              
-             # for the first version of input csv file
-
-            user_message = row[1]
-            assistant_message = row[2]
-            is_liked = row[3].lower() == "true"
-            created_at_str = row[8]
-            Q1 = row[5]
-            Q2 = row[7]
-            Q3 = row[6]
             
-            # timestamp
-            try:
-                # created_at = parse_timestamp(created_at_str)
-                created_at = created_at_str
-            except ValueError as e:
-                print(f"⚠️  Line {line_num}: invalid timestamp '{created_at_str}': {e}, skipping")
-                continue
+            if type_csv == 1:
+                # for the first version of input csv file
 
-            # for the second version of input csv
-            # user_message = row[0]
-            # assistant_message = row[1]
-            # is_liked = row[2].lower() == "true"
-            # created_at_str = row[7]
-            # Q1 = row[4]
-            # Q2 = row[5]
-            # Q3 = row[6]
-            
-            # # timestamp
-            # try:
-            #     # created_at = parse_timestamp(created_at_str)
-            #     created_at = created_at_str
-            # except ValueError as e:
-            #     print(f"⚠️  Line {line_num}: invalid timestamp '{created_at_str}': {e}, skipping")
-            #     continue
+                user_message = row[1]
+                assistant_message = row[2]
+                #########################
+                try:
+                    is_liked = parse_is_liked(row[3])
+                except ValueError as e:
+                    print(f"⚠️ Line {line_num}: {e}, setting is_liked=NULL")
+                    is_liked = None
+                #########################
+                created_at_str = row[8].strip()
+                Q1 = row[5]
+                Q2 = row[7]
+                Q3 = row[6]
+                
+                # timestamp
+                try:
+                    # created_at = parse_timestamp(created_at_str)
+                    created_at = created_at_str
+                except ValueError as e:
+                    print(f"⚠️  Line {line_num}: invalid timestamp '{created_at_str}': {e}, skipping")
+                    continue
+            elif type_csv ==0: 
+                #for the second version of input csv
+                user_message = row[0]
+                assistant_message = row[1]
+                is_liked = row[2].lower() == "true"
+                created_at_str = row[7]
+                Q1 = row[4]
+                Q2 = row[5]
+                Q3 = row[6]
+                
+                # timestamp
+                try:
+                    # created_at = parse_timestamp(created_at_str)
+                    created_at = created_at_str
+                except ValueError as e:
+                    print(f"⚠️  Line {line_num}: invalid timestamp '{created_at_str}': {e}, skipping")
+                    continue
 
 
             comment = AI_assistant(
