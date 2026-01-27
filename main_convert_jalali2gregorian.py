@@ -8,8 +8,11 @@ from datetime import datetime
 import csv
 from datetime import datetime
 
-INPUT_CSV = "./convert_date_AI_aasistant/AI_assistant_15Aban_30Dey_test.csv"
-OUTPUT_CSV = "./convert_date_AI_aasistant/AI_assistant_15Mehr_2Aban_converted_date.csv"
+# INPUT_CSV = "./convert_date_AI_aasistant/data/AI_assistant_15Mehr_2Dey.csv"
+# OUTPUT_CSV = "./convert_date_AI_aasistant/AI_assistant_15Mehr_2Dey_converted_date.csv"
+
+INPUT_CSV = "./convert_date_AI_aasistant/data/AI_assistant_15Aban_30Dey_cleaned.csv"
+OUTPUT_CSV = "./convert_date_AI_aasistant/AI_assistant_15Aban_30Dey_cleaned_converted_date.csv"
 
 with open(INPUT_CSV, newline="", encoding="utf-8") as infile, \
      open(OUTPUT_CSV, "w", newline="", encoding="utf-8") as outfile:
