@@ -18,3 +18,15 @@ nltk
 langchain_community
 #solve the http error problem for google translate
 deep-translator
+json-rpc
+requests
+selenium
+tenacity
+tqdm
+persiantools
+
+
+# pip install -r requirment.txt
+#pandas
+
+#python-dotenv
