@@ -40,12 +40,17 @@ def create_table(conn):
     turn_id SERIAL PRIMARY KEY,   
     user_message TEXT,
     assistant_message TEXT,
+    imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_liked BOOLEAN,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     Q1 VARCHAR(255),
     Q2 VARCHAR(255),
     Q3 TEXT);
-    
+    CREATE INDEX IF NOT EXISTS idx_dima_AI_assistant_is_liked ON dima_AI_assistant(is_liked);
+    CREATE INDEX IF NOT EXISTS idx_dima_AI_assistant_Q1 ON dima_AI_assistant(Q1);
+    CREATE INDEX IF NOT EXISTS idx_dima_AI_assistant_Q2 ON dima_AI_assistant(Q2);
+    CREATE UNIQUE INDEX IF NOT EXISTS unique_message_time
+        ON dima_ai_assistant (user_message, created_at);
     """
     with conn.cursor() as cur:
         cur.execute(create_sql)
@@ -77,7 +82,7 @@ def parse_csv(filename: str) -> List[AI_assistant]:
 
             user_message = row[0]
             assistant_message = row[1]
-            is_liked = row[2]
+            is_liked = row[2].lower() == "true"
             created_at_str = row[7]
             Q1 = row[4]
             Q2 = row[5]
@@ -94,7 +99,7 @@ def parse_csv(filename: str) -> List[AI_assistant]:
             comment = AI_assistant(
                 user_message=user_message,
                 assistant_message=assistant_message,
-                is_liked = row[2].lower() == "true",
+                is_liked = is_liked,
                 created_at=created_at,
                 Q1=Q1,
                 Q2=Q2,

@@ -92,6 +92,7 @@ CREATE TABLE dima_AI_assistant (
     turn_id SERIAL PRIMARY KEY,   
     user_message TEXT,
     assistant_message TEXT,
+    imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_liked BOOLEAN,
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     Q1 VARCHAR(255),

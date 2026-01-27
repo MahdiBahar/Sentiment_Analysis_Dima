@@ -24,7 +24,7 @@ def main():
         print("Connected to DB:",
               dsn.get("dbname"), "@", dsn.get("host"), "port", dsn.get("port"),
               "as user", dsn.get("user"))
-
+        create_table(conn)         
         # 🔍 2) Count rows BEFORE import
         with conn.cursor() as cur:
             cur.execute("SELECT count(*) FROM dima_AI_assistant;")
@@ -32,7 +32,7 @@ def main():
         print("Row count BEFORE:", before_count)
 
         # your existing logic:
-        create_table(conn)           # or remove if you don't want it anymore
+        
         comments = parse_csv(csv_file)
         insert_comments(conn, comments)
 
