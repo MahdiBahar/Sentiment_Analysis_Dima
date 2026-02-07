@@ -16,7 +16,7 @@ from selenium.common.exceptions import TimeoutException
 from .connect_to_database_func import connect_db
 # Convert to jalali
 from .convert_to_jalali_func import convert_to_jalali
-from logging_config import setup_logger
+from .logging_config import setup_logger
 from dotenv import load_dotenv
 
 # Load environment variables from .env file

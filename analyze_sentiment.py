@@ -5,7 +5,7 @@ import time
 # Connect to database
 from connect_to_database_func import connect_db
 from dotenv import load_dotenv
-from logging_config import setup_logger  # Import logger setup function
+from cafe_bazar_app.logging_config import setup_logger  # Import logger setup function
 import os
 from deep_translator import GoogleTranslator
 ## For using local models
@@ -14,7 +14,7 @@ os.environ["HF_DATASETS_OFFLINE"] = "1"
 
 
 # # Initialize logger
-logger = setup_logger(name="sentiment_analysis", log_file="analyze_sentiment.log")
+logger = setup_logger(name="sentiment_analysis_dima", log_file="analyze_sentiment_dima.log")
 
 
  #Completely remove proxy env vars for this process

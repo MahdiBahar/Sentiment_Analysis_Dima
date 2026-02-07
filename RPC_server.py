@@ -4,7 +4,7 @@ import threading
 from cafe_bazar_app.comment_scraper import fetch_app_urls_to_crawl, crawl_comments
 from cafe_bazar_app.app_scraper_check import give_information_app, check_and_create_app_id
 from analyze_sentiment import analyze_and_update_sentiment, fetch_comments_to_analyze
-from logging_config import setup_logger
+from cafe_bazar_app.logging_config import setup_logger
 
 # Setup logger
 logger = setup_logger('rpc_server', 'rpc_server.log')

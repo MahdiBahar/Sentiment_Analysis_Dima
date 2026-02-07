@@ -1,12 +1,16 @@
 from connect_to_database_func import connect_db
 from dotenv import load_dotenv
-from analyze_comments import fetch_comments_to_analyze,upsert_comment_analysis,mark_comment_as_analyzed, logger
+from analyze_comments import fetch_comments_to_analyze,upsert_comment_analysis,mark_comment_as_analyzed
 from LLM_function_analysis import call_LLM_single_comment, extract_json, validate_output, normalize_for_match
 from datetime import datetime, timezone
 import json
+from cafe_bazar_app.logging_config import setup_logger  # Import logger setup function
 
 load_dotenv()
 
+# # Initialize logger
+
+logger = setup_logger(name="comment_analysis_dima", log_file="analyze_comment_dima.log")
 
 def run_comment_analysis_batch():
     comments = fetch_comments_to_analyze()

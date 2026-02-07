@@ -1,7 +1,7 @@
 from LLM_summarize import call_LLM_summarize_comment, fetch_comments_to_summarize, extract_json, upsert_summarized_analysis,append_jsonl
 from connect_to_database_func import connect_db
 from dotenv import load_dotenv
-from logging_config import setup_logger  # Import logger setup function
+from cafe_bazar_app.logging_config import setup_logger  # Import logger setup function
 from datetime import datetime, timezone
 import time
 

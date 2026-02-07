@@ -4,7 +4,7 @@ from datetime import datetime
 from tenacity import retry, wait_exponential, stop_after_attempt
 from cafe_bazar_app.app_scraper_logging import fetch_urls_to_crawl, give_information_app, get_or_create_app_id, log_scrape
 from cafe_bazar_app.convert_to_jalali_func import convert_to_jalali
-from logging_config import setup_logger
+from cafe_bazar_app.logging_config import setup_logger
 
 # Setup logger
 logger = setup_logger('daily_task', 'daily_task.log')

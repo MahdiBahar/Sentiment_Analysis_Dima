@@ -6,7 +6,7 @@ from deep_translator import GoogleTranslator
 # Connect to database
 from .connect_to_database_func import connect_db
 from dotenv import load_dotenv
-from logging_config import setup_logger  # Import logger setup function
+from .logging_config import setup_logger  # Import logger setup function
 import os
 
 ## For using local models
@@ -17,7 +17,7 @@ os.environ["HF_DATASETS_OFFLINE"] = "1"
 load_dotenv()
 
 # Initialize logger
-logger = setup_logger(name="sentiment_analysis", log_file="analyze_sentiment.log")
+logger = setup_logger(name="sentiment_analysis_cafe_bazar", log_file="analyze_sentiment_apps.log")
 
 # Load the tokenizer and model
 logger.info("Loading MT5 model and tokenizer...")

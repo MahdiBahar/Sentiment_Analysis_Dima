@@ -1,6 +1,6 @@
 from connect_to_database_func import connect_db
 from dotenv import load_dotenv
-from logging_config import setup_logger  # Import logger setup function
+from cafe_bazar_app.logging_config import setup_logger  # Import logger setup function
 
 load_dotenv()
 

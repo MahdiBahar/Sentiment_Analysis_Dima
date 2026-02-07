@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 # Connect to database
 from .connect_to_database_func import connect_db
 from dotenv import load_dotenv
-from logging_config import setup_logger
+from .logging_config import setup_logger
 
 # Load environment variables from .env file
 load_dotenv()
