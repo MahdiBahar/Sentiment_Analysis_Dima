@@ -1,11 +1,13 @@
 from jsonrpc import JSONRPCResponseManager, dispatcher
-from http.server import BaseHTTPRequestHandler, HTTPServer
+# from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
 import threading
 from cafe_bazar_app.comment_scraper import fetch_app_urls_to_crawl, crawl_comments
 from cafe_bazar_app.app_scraper_check import give_information_app, check_and_create_app_id
 from cafe_bazar_app.analyze_sentiment_apps import fetch_comments_to_analyze_apps, analyze_and_update_sentiment
 from cafe_bazar_app.logging_config import setup_logger
-
+from Ngram import run_ngram_analysis
 # Setup logger
 logger = setup_logger('rpc_server', 'rpc_server.log')
 # Initialize logger
@@ -130,6 +132,40 @@ def check_task_status(task_id):
             return {"status": "error", "message": "Task ID not found"}
 
 
+@dispatcher.add_method
+def ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
+
+    task_id = str(len(tasks_status) + 1)
+
+    with tasks_lock:
+        tasks_status[task_id] = {
+            "status": "started",
+            "description": "Ngram analysis",
+            "result": None
+        }
+
+    def wrapped_task():
+        results = run_ngram_analysis(
+            sentiment=sentiment,
+            start_date=start_date,
+            end_date=end_date,
+            top_k=top_k
+        )
+
+        with tasks_lock:
+            tasks_status[task_id]["result"] = results
+
+    threading.Thread(
+        target=perform_task,
+        args=(task_id, wrapped_task)
+    ).start()
+
+    return {
+        "task_id": task_id,
+        "message": "Task started: Ngram analysis"
+    }
+
+
 def fetch_and_crawl_comments(app_ids):
     logger.info("Fetching app URLs and crawling comments...")
     apps = fetch_app_urls_to_crawl(app_ids)
@@ -159,5 +195,7 @@ def analyze_sentiments(app_ids):
 if __name__ == "__main__":
     logger.info("Server running on port 5000...")
     crawl_event.set()
-    server = HTTPServer(("0.0.0.0", 5000), RequestHandler)
+    # server = HTTPServer(("0.0.0.0", 5000), RequestHandler)
+    server = ThreadingHTTPServer(("0.0.0.0", 5000), RequestHandler)
+
     server.serve_forever()

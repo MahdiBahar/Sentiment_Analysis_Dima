@@ -13,11 +13,7 @@ import numpy as np
 # ---------------------------
 # 1) Fetch comments from DB
 # ---------------------------
-def fetch_comments(sentiment=None, min_len=2, limit=None):
-    """
-    Fetch comments (id, title, grade, description, sentiment_result) from DB.
-    Optionally filter by sentiment ('negative', 'positive', etc.) and non-empty text.
-    """
+def fetch_comments(sentiment=None, start_date=None, end_date=None, min_len=2, limit=None):
     conn = connect_db()
     cur = conn.cursor()
 
@@ -25,14 +21,26 @@ def fetch_comments(sentiment=None, min_len=2, limit=None):
         SELECT id, title, grade, description, COALESCE(sentiment_result, '') as sentiment_result
         FROM dima_comments
         WHERE description IS NOT NULL 
-            AND is_repetitive = FALSE
-           AND sentiment_score >0
+          AND is_repetitive = FALSE
+          AND sentiment_score > 0
     """
+
     args = []
+
     if sentiment:
         base += " AND lower(sentiment_result) = lower(%s)"
         args.append(sentiment)
+
+    if start_date:
+        base += " AND created_at >= %s"
+        args.append(start_date)
+
+    if end_date:
+        base += " AND created_at <= %s"
+        args.append(end_date)
+
     base += " ORDER BY id ASC"
+
     if limit:
         base += " LIMIT %s"
         args.append(limit)
@@ -43,9 +51,10 @@ def fetch_comments(sentiment=None, min_len=2, limit=None):
     conn.close()
 
     df = pd.DataFrame(rows, columns=["id", "title", "grade", "description", "sentiment_result"])
-    # # drop very short strings
     df = df[df["description"].str.len() >= min_len].reset_index(drop=True)
+
     return df
+
 
 
 
@@ -130,7 +139,8 @@ def extract_top_ngrams_tfidf(
 
     X = vectorizer.fit_transform(texts)
     feature_names = vectorizer.get_feature_names_out()
-    tfidf_scores = X.sum(axis=0).A1
+    # tfidf_scores = X.sum(axis=0).A1
+    tfidf_scores = np.asarray(X.mean(axis=0)).ravel()
 
     df_tfidf = pd.DataFrame({
         "ngram": feature_names,
@@ -154,3 +164,25 @@ def group_sentiments(df):
 
     return df
 
+
+def run_ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
+    df = fetch_comments(
+        sentiment=sentiment,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    if df.empty:
+        return []
+
+    df = group_sentiments(df)
+
+    texts = df["description"].tolist()
+
+    tfidf_df = extract_top_ngrams_tfidf(
+        texts,
+        ngram_range=(2,3),
+        top_k=top_k
+    )
+
+    return tfidf_df.to_dict(orient="records")
