@@ -1,0 +1,27 @@
+# One-Time Sequence Fix (RUN ONCE ONLY) for being compatible during transfering in new database
+# Because we copy tables from the old database and past it in new ones the squence part of inserting data in database doesn't follow the last number of comment_id.
+# So, we just need to run this sql code onece to solve this problem.
+# Run this manually on the new database:
+
+SELECT setval(
+    pg_get_serial_sequence('app_comments', 'comment_id'),
+    (SELECT COALESCE(MAX(comment_id), 0) FROM app_comments) + 1,
+    false
+);
+
+# For solving this error:
+# 2026-01-28 09:11:23,742 - INFO - Successfully updated app_info for app_id 3.
+# 2026-01-28 09:11:23,743 - INFO - Updated app_info for app_id 3, nickname: ir.nasim
+# 2026-01-28 09:11:23,765 - ERROR - Error logging scrape for app_id 3: duplicate key value violates unique constraint "log_app_pkey"
+# DETAIL:  Key (log_app_id)=(1) already exists.
+# Traceback (most recent call last):
+#  File "/home/mahdi/Sentiment_Analysis_Product/app_scraper_logging.py", line 97, in log_scrape
+#    cursor.execute(log_query, (
+# psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "log_app_pkey"
+# DETAIL:  Key (log_app_id)=(1) already exists.
+
+SELECT setval(
+    pg_get_serial_sequence('log_app', 'log_app_id'),
+    (SELECT COALESCE(MAX(log_app_id), 0) FROM log_app) + 1,
+    false
+);
