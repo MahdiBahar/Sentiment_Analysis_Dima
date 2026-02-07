@@ -350,7 +350,7 @@ for pkg in ["punkt", "punkt_tab"]:
         nltk.download(pkg, quiet=True)
 
 
-##### How to call insert data function in database?
+##### How to call insert data function in database to dima_comments table?
 
 Ex: python main_import_comments_and_hash.py data/feedback_9-25-test-V0.1.csv
 
@@ -366,3 +366,9 @@ from deep_translator import GoogleTranslator
 2. We have three questions after the user has decided to like or dislike the chat.
 3. We recored one turn after triger (question and answer for one turn)
 4. The third question is the part that user at give a comment
+
+### The way we have two insert data through terminal
+python main_import_AI_assistant.py <csv_file> <csv_type>
+csv_type = 0 for new version of data
+csv_type = 1 for the first version of csv data
+python main_import_AI_assistant.py convert_date_AI_aasistant/AI_assistant_15Aban_30Dey_cleaned_converted_date.csv 0
