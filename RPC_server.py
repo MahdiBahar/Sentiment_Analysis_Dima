@@ -3,12 +3,13 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading
 from cafe_bazar_app.comment_scraper import fetch_app_urls_to_crawl, crawl_comments
 from cafe_bazar_app.app_scraper_check import give_information_app, check_and_create_app_id
-from analyze_sentiment import analyze_and_update_sentiment, fetch_comments_to_analyze
+from cafe_bazar_app.analyze_sentiment_apps import fetch_comments_to_analyze_apps, analyze_and_update_sentiment
 from cafe_bazar_app.logging_config import setup_logger
 
 # Setup logger
 logger = setup_logger('rpc_server', 'rpc_server.log')
-
+# Initialize logger
+logger_sentiment_apps = setup_logger(name="sentiment_analysis_cafe_bazar", log_file="analyze_sentiment_apps.log")
 # Global dictionary to track tasks
 tasks_status = {}
 tasks_lock = threading.Lock()
@@ -145,11 +146,11 @@ def analyze_sentiments(app_ids):
     logger.info("Starting sentiment analysis...")
     for app_id in app_ids:
         try:
-            comments = fetch_comments_to_analyze(app_id)
+            comments = fetch_comments_to_analyze_apps(logger_sentiment_apps,app_id)
             if not comments:
                 logger.info(f"No comments left to analyze for app_id {app_id}")
                 continue
-            analyze_and_update_sentiment(comments, app_id)
+            analyze_and_update_sentiment(logger_sentiment_apps,comments, app_id)
             logger.info(f"Sentiment analysis completed for app_id {app_id}")
         except Exception as e:
             logger.error(f"Error during sentiment analysis for app_id {app_id}: {e}", exc_info=True)
