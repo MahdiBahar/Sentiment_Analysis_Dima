@@ -30,3 +30,6 @@ persiantools
 #pandas
 
 #python-dotenv
+
+# pip install openai for using vllm
+openai
