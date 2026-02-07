@@ -372,3 +372,16 @@ python main_import_AI_assistant.py <csv_file> <csv_type>
 csv_type = 0 for new version of data
 csv_type = 1 for the first version of csv data
 python main_import_AI_assistant.py convert_date_AI_aasistant/AI_assistant_15Aban_30Dey_cleaned_converted_date.csv 0
+
+### Localize Ngram calculation for word cloud part
+
+instead of 
+
+nltk.download("punkt")
+
+try:
+        nltk.data.find("/home/mahdi/nltk_data/tokenizers/punkt")
+    except LookupError:
+        raise RuntimeError("NLTK punkt tokenizer not installed. Run nltk.download('punkt') once with internet.")
+
+So, if the Internet is shutdown, we do not have any problems.

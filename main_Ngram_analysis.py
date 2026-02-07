@@ -114,5 +114,10 @@ def main(limit=None, version = 0.0):
 
 if __name__ == "__main__":
    
-    nltk.download("punkt", quiet=True)
+
+    try:
+        nltk.data.find("/home/mahdi/nltk_data/tokenizers/punkt")
+    except LookupError:
+        raise RuntimeError("NLTK punkt tokenizer not installed. Run nltk.download('punkt') once with internet.")
+
     sys.exit(main(limit=None,version=0.3))  # set limit=1000 for faster testing
