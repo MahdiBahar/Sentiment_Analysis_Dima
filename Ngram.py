@@ -9,7 +9,7 @@ from nltk.tokenize import word_tokenize
 import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
-
+import nltk
 # ---------------------------
 # 1) Fetch comments from DB
 # ---------------------------
@@ -28,8 +28,16 @@ def fetch_comments(sentiment=None, start_date=None, end_date=None, min_len=2, li
     args = []
 
     if sentiment:
-        base += " AND lower(sentiment_result) = lower(%s)"
-        args.append(sentiment)
+        sentiment = sentiment.lower()
+        if sentiment == "negative":
+            base += " AND sentiment_score IN (1, 2)"
+        elif sentiment == "neutral":
+            base += " AND sentiment_score = 3"
+        elif sentiment == "positive":
+            base += " AND sentiment_score IN (4, 5)"
+    
+    if sentiment and sentiment.lower() not in ["negative", "neutral", "positive"]:
+        raise ValueError("Sentiment must be negative, neutral, or positive")
 
     if start_date:
         base += " AND created_at >= %s"
@@ -166,6 +174,11 @@ def group_sentiments(df):
 
 
 def run_ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
+    try:
+        nltk.data.find("/home/mahdi/nltk_data/tokenizers/punkt")
+    except LookupError:
+        raise RuntimeError("NLTK punkt tokenizer not installed. Run nltk.download('punkt') once with internet.")
+    
     df = fetch_comments(
         sentiment=sentiment,
         start_date=start_date,
@@ -175,7 +188,7 @@ def run_ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30)
     if df.empty:
         return []
 
-    df = group_sentiments(df)
+    # df = group_sentiments(df)
 
     texts = df["description"].tolist()
 
