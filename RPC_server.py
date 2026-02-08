@@ -39,23 +39,28 @@ class RequestHandler(BaseHTTPRequestHandler):
 def perform_task(task_id, task_function, *args):
     global tasks_status
 
-    # Update task status to "working"
     with tasks_lock:
-        tasks_status[task_id] = {"status": "working", "description": tasks_status[task_id]["description"]}
+        tasks_status[task_id]["status"] = "working"
 
     try:
-        # Execute the actual task function
         logger.info(f"Starting task {task_id}: {tasks_status[task_id]['description']}")
-        task_function(*args)
-        # Update task status to "completed"
+
+        # 🔥 Capture result
+        result = task_function(*args)
+
         with tasks_lock:
             tasks_status[task_id]["status"] = "completed"
+            tasks_status[task_id]["result"] = result
+
         logger.info(f"Task {task_id} completed successfully.")
+
     except Exception as e:
-        # Update task status to "failed"
         with tasks_lock:
-            tasks_status[task_id] = {"status": "failed", "description": tasks_status[task_id]["description"], "error": str(e)}
+            tasks_status[task_id]["status"] = "failed"
+            tasks_status[task_id]["error"] = str(e)
+
         logger.error(f"Task {task_id} failed: {e}", exc_info=True)
+
 
 
 @dispatcher.add_method
@@ -124,36 +129,44 @@ def check_task_status(task_id):
     global tasks_status
 
     with tasks_lock:
-        if task_id in tasks_status:
-            logger.info(f"Task status checked: {task_id} - {tasks_status[task_id]}")
-            return tasks_status[task_id]
-        else:
-            logger.warning(f"Task status check failed: Task ID {task_id} not found.")
+        task = tasks_status.get(task_id)
+
+        if not task:
             return {"status": "error", "message": "Task ID not found"}
+
+        return {
+            "status": task["status"],
+            "description": task["description"],
+            "result": task.get("result"),
+            "error": task.get("error")
+        }
 
 
 @dispatcher.add_method
 def ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
 
     task_id = str(len(tasks_status) + 1)
+    # import uuid
+    # task_id = str(uuid.uuid4())
+    
+    if top_k is not None:
+        top_k = int(top_k)
 
     with tasks_lock:
         tasks_status[task_id] = {
             "status": "started",
             "description": "Ngram analysis",
-            "result": None
+            "result": None,
+            "error": None
         }
 
     def wrapped_task():
-        results = run_ngram_analysis(
+        return run_ngram_analysis(
             sentiment=sentiment,
             start_date=start_date,
             end_date=end_date,
             top_k=top_k
         )
-
-        with tasks_lock:
-            tasks_status[task_id]["result"] = results
 
     threading.Thread(
         target=perform_task,
@@ -164,6 +177,7 @@ def ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
         "task_id": task_id,
         "message": "Task started: Ngram analysis"
     }
+
 
 
 def fetch_and_crawl_comments(app_ids):

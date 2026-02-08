@@ -47,11 +47,21 @@ def start_and_track_task(method, params=None):
             print(f"Task {method} status: {status_result}")
 
             # Stop polling when the task is completed or failed
-            if status_result and "status" in status_result and status_result["status"] in ("completed", "failed"):
-                break
+            if status_result and "status" in status_result:
+                if status_result["status"] == "completed":
+                    print("\n✅ Task completed successfully!")
+                    print("Result:")
+                    print(status_result.get("result"))
+                    break
+
+                elif status_result["status"] == "failed":
+                    print("\n❌ Task failed!")
+                    print("Error:", status_result.get("error"))
+                    break
+
 
             # Wait before polling again
-            time.sleep(100)
+            time.sleep(30)
 
     except Exception as e:
         print(f"Error in {method}: {e}")
@@ -68,6 +78,20 @@ if __name__ == "__main__":
     # app_ids = [8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]
     print("Starting crawl_comment task...")
     start_and_track_task("crawl_comment", {"app_ids": app_ids})
+
+
+    # print("\nStarting ngram_analysis task...")
+
+    # start_and_track_task(
+    #     "ngram_analysis",
+    #     {
+    #         "sentiment": "positive",
+    #         "start_date": "2025-10-01",
+    #         "end_date": "2026-01-01",
+    #         "top_k": 50
+    #     }
+    #     )
+
 
     print("\nStarting sentiment_analysis task...")
     start_and_track_task("sentiment_analysis", {"app_ids": app_ids})
