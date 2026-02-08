@@ -6,55 +6,60 @@ from deep_translator import GoogleTranslator
 import os
 import time 
 
-## For using local models
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
-os.environ["HF_DATASETS_OFFLINE"] = "1"
+
+def load_models():
+    ## For using local models
+    os.environ["TRANSFORMERS_OFFLINE"] = "1"
+    os.environ["HF_DATASETS_OFFLINE"] = "1"
 
 
-   
-# Load the tokenizer and model
-model_name = "persiannlp/mt5-base-parsinlu-sentiment-analysis"
-# tokenizer = MT5Tokenizer.from_pretrained(model_name)
-# model = MT5ForConditionalGeneration.from_pretrained(model_name)
+    
+    # Load the tokenizer and model
+    model_name = "persiannlp/mt5-base-parsinlu-sentiment-analysis"
+    # tokenizer = MT5Tokenizer.from_pretrained(model_name)
+    # model = MT5ForConditionalGeneration.from_pretrained(model_name)
 
-# For localize the first model
-tokenizer = MT5Tokenizer.from_pretrained(
-    model_name,
-    local_files_only=True
-)
+    # For localize the first model
+    tokenizer = MT5Tokenizer.from_pretrained(
+        model_name,
+        local_files_only=True
+    )
 
-model = MT5ForConditionalGeneration.from_pretrained(
-    model_name,
-    local_files_only=True
-)
+    model = MT5ForConditionalGeneration.from_pretrained(
+        model_name,
+        local_files_only=True
+    )
 
-# Load the second model (Hugging Face pipeline)
-# classifier = pipeline("sentiment-analysis", device=-1)
+    # Load the second model (Hugging Face pipeline)
+    # classifier = pipeline("sentiment-analysis", device=-1)
 
-## For localize the second model
-classifier = pipeline(
-    "sentiment-analysis",
-    model="/home/mahdi/.cache/huggingface/hub/models--distilbert-base-uncased-finetuned-sst-2-english/snapshots/714eb0fa89d2f80546fda750413ed43d93601a13",
-    tokenizer="/home/mahdi/.cache/huggingface/hub/models--distilbert-base-uncased-finetuned-sst-2-english/snapshots/714eb0fa89d2f80546fda750413ed43d93601a13",
-    device=-1
-)
-
-
-# Initialize Google Translator
-# translator = Translator()
-translator = GoogleTranslator(source="auto", target="en")
-# Sentiment mapping for scoring
-SENTIMENT_SCORES = {
-    "very negative": -2,
-    "negative": -1,
-    "neutral": 0,
-    "mixed": 0,
-    "positive": 1,
-    "very positive": 2,
-    "no sentiment expressed": 0
-}
+    ## For localize the second model
+    classifier = pipeline(
+        "sentiment-analysis",
+        model="/home/mahdi/.cache/huggingface/hub/models--distilbert-base-uncased-finetuned-sst-2-english/snapshots/714eb0fa89d2f80546fda750413ed43d93601a13",
+        tokenizer="/home/mahdi/.cache/huggingface/hub/models--distilbert-base-uncased-finetuned-sst-2-english/snapshots/714eb0fa89d2f80546fda750413ed43d93601a13",
+        device=-1
+    )
 
 
+    # Initialize Google Translator
+    # translator = Translator()
+    translator = GoogleTranslator(source="auto", target="en")
+    # Sentiment mapping for scoring
+    SENTIMENT_SCORES = {
+        "very negative": -2,
+        "negative": -1,
+        "neutral": 0,
+        "mixed": 0,
+        "positive": 1,
+        "very positive": 2,
+        "no sentiment expressed": 0
+    }
+
+
+    return tokenizer, model, classifier, translator, SENTIMENT_SCORES
+
+tokenizer, model, classifier, translator, SENTIMENT_SCORES = load_models()
 
 
 def run_first_model(logger,context, text_b="نظر شما چیست", **generator_args):
