@@ -8,31 +8,31 @@ from cafe_bazar_app.logging_config import setup_logger  # Import logger setup fu
 
 load_dotenv()
 
-# # Initialize logger
 
-logger = setup_logger(name="comment_analysis_dima", log_file="analyze_comment_dima.log")
-
-def run_comment_analysis_batch():
+def run_comment_analysis_batch(logger):
     comments = fetch_comments_to_analyze()
 
     if not comments:
         logger.info("No comments to analyze.")
-        return
+        return {"processed": 0, "failed": 0}
 
     conn = connect_db()
+    processed_count = 0
+    failed_count = 0
     DRY_RUN = False
     try:
         for c in comments:
             try:
-                logger.info(f"Analyzing comment {c['comment_id']}")
-                model = "phi4"
+                # len_comment = normalize_for_match(text=c.get("comment_text")) 
+                # # if len(len_comment.split())<3:
+                # #     # logger.info(f"The length of this comment with {c['comment_id']} id is {len(len_comment.split())}")
+                # #     continue
                 if c.get("is_analyzed"):
                     logger.info(f"This comment with {c['comment_id']} id is analyzed before")
                     continue
-                len_comment = normalize_for_match(text=c.get("comment_text")) 
-                if len(len_comment.split())<3:
-                    logger.info(f"The length of this comment with {c['comment_id']} id is {len(len_comment.split())}")
-                    continue
+                
+                logger.info(f"Analyzing comment {c['comment_id']}")
+                model = "phi4"
                 raw_analysis = call_LLM_single_comment(
                         comment_id=str(c["comment_id"]),
                         comment_text=c["comment_text"],
@@ -58,7 +58,10 @@ def run_comment_analysis_batch():
                     else c["created_at"]
                 )
                 # analysis["created_at"] = c["created_at"]
+                if analysis["category"] == "ai assistant":
 
+                    analysis["category"] = "ai"    
+                
                 analysis["title"] = c["title"]
                 analysis["comment_id"] = c["comment_id"]
                 
@@ -85,10 +88,12 @@ def run_comment_analysis_batch():
                         logger.info(f"comment {c['comment_id']} is inserted to comment analysis table properly")
                         mark_comment_as_analyzed(conn, c["comment_id"])
                         logger.info(f"comment {c['comment_id']} is changed to is_analyzed")
-                        # conn.commit()
+
+                        processed_count += 1
 
             except Exception as e:
                 conn.rollback()
+                failed_count += 1
                 logger.error(
                     f"Failed to analyze comment {c['comment_id']}: {e}",
                     exc_info=True
@@ -96,11 +101,20 @@ def run_comment_analysis_batch():
 
     finally:
         conn.close()
+    return {
+        "processed": processed_count,
+        "failed": failed_count
+    }
 
 
-if __name__ == "__main__":
-    logger.info("🚀 Starting comment analysis...")
 
-    run_comment_analysis_batch()
+#########RUN seperately ###############################################
 
-    logger.info("✅ comment analysis completed.")
+# logger = setup_logger(name="comment_analysis_dima", log_file="analyze_comment_dima.log")
+
+# if __name__ == "__main__":
+#     logger.info("🚀 Starting comment analysis...")
+
+#     run_comment_analysis_batch(logger)
+
+#     logger.info("✅ comment analysis completed.")

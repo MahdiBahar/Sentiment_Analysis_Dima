@@ -27,6 +27,7 @@ def fetch_comments_to_analyze():
                 AND is_analyzed IS FALSE
                 AND description IS NOT NULL 
                 AND TRIM(description) != ''
+                AND array_length( regexp_split_to_array(TRIM(description), '\s+'), 1) >= 3
             ORDER BY id ASC
             
         """
@@ -59,7 +60,7 @@ def fetch_comments_to_analyze():
 #################################################################################\
 def upsert_comment_analysis(conn, analysis):
     query = """
-        INSERT INTO dima_comment_analysis (
+        INSERT INTO dima_comments_analysis (
             comment_id,
             created_at,
             sentiment_result,
@@ -115,7 +116,7 @@ def upsert_comment_analysis(conn, analysis):
 def mark_comment_as_analyzed(conn, comment_id):
     with conn.cursor() as cur:
         cur.execute(
-            "UPDATE comments SET is_analyzed = TRUE WHERE id = %s;",
+            "UPDATE dima_comments SET is_analyzed = TRUE WHERE id = %s;",
             (comment_id,)
         )
 
