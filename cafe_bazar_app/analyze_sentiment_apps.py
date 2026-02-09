@@ -53,7 +53,7 @@ def update_sentiment_apps(logger, comment_id, sentiment_result, sentiment_score,
 
 
 # Main function to fetch comments for a specific app_id and update sentiments
-def analyze_and_update_sentiment(logger, comments, app_id):
+def analyze_and_update_sentiment_apps(logger, comments, app_id):
     logger.info(f"Starting sentiment analysis for app_id: {app_id} from app_comments")
     for comment_id, comment_text, comment_rating in comments:
         try:

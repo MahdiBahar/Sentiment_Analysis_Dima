@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import threading
 from cafe_bazar_app.comment_scraper import fetch_app_urls_to_crawl, crawl_comments
 from cafe_bazar_app.app_scraper_check import give_information_app, check_and_create_app_id
-from cafe_bazar_app.analyze_sentiment_apps import fetch_comments_to_analyze_apps, analyze_and_update_sentiment
+from cafe_bazar_app.analyze_sentiment_apps import fetch_comments_to_analyze_apps, analyze_and_update_sentiment_apps
 from cafe_bazar_app.logging_config import setup_logger
 from Ngram import run_ngram_analysis
 
@@ -98,7 +98,7 @@ def crawl_comment(app_ids):
     # Start the task in a separate thread
     def wrapped_task():
         try:
-            fetch_and_crawl_comments(app_ids)
+            fetch_and_crawl_comments_apps(app_ids)
         finally:
             crawl_event.set()  # Signal that crawling is complete
             logger.info("Crawling comments completed.")
@@ -108,7 +108,7 @@ def crawl_comment(app_ids):
 
 
 @dispatcher.add_method
-def sentiment_analysis(app_ids):
+def sentiment_analysis_apps(app_ids):
     global tasks_status, crawl_event
 
     # task_id = "2"
@@ -120,7 +120,7 @@ def sentiment_analysis(app_ids):
     def wrapped_task():
         crawl_event.wait()  # Wait for crawling to complete
         with gpu_lock:
-            analyze_sentiments(app_ids)
+            analyze_sentiments_apps(app_ids)
 
     threading.Thread(target=perform_task, args=(task_id, wrapped_task)).start()
     return {"task_id": task_id, "message": "Task started: Sentiment analysis from app_comments"}
@@ -266,7 +266,7 @@ def sentiment_analysis_dima(limit=100):
     }
 
 
-def fetch_and_crawl_comments(app_ids):
+def fetch_and_crawl_comments_apps(app_ids):
     logger.info("Fetching app URLs and crawling comments from app_comments...")
     apps = fetch_app_urls_to_crawl(app_ids)
     for app_id, app_url in apps:
@@ -278,7 +278,7 @@ def fetch_and_crawl_comments(app_ids):
             logger.error(f"Error crawling comments from app_comments for app_id {app_id}: {e}", exc_info=True)
 
 
-def analyze_sentiments(app_ids):
+def analyze_sentiments_apps(app_ids):
     logger.info("Starting sentiment analysis from app_comments...")
     for app_id in app_ids:
         try:
@@ -286,7 +286,7 @@ def analyze_sentiments(app_ids):
             if not comments:
                 logger.info(f"No comments left to analyze from app_comments for app_id {app_id}")
                 continue
-            analyze_and_update_sentiment(logger_sentiment_apps,comments, app_id)
+            analyze_and_update_sentiment_apps(logger_sentiment_apps,comments, app_id)
             logger.info(f"Sentiment analysis completed from app_comments for app_id {app_id}")
         except Exception as e:
             logger.error(f"Error during sentiment analysis from app_comments for app_id {app_id}: {e}", exc_info=True)
