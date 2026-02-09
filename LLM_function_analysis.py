@@ -75,10 +75,11 @@ Rules:
 Allowed values:
 
 type: issue | suggestion | question | praise | other
-category: transfer | auth | card | bill | loan | login | ui | performance | AI | other
+category: transfer | auth | card | bill | loan | login | ui | performance | ai assistant | support | account |other
 severity / priority: high | medium | low | null
 
 - If unsure, use "other" for type and category.
+- If find more than one categories for comment, just choose one and ignore other options.
 
 JSON format:
 
@@ -111,16 +112,67 @@ Comment:
 ##############################################################################################
 ALLOWED_TYPES = {"issue","suggestion","question","praise","other"}
 ALLOWED_CATEGORIES = {
-    "transfer","auth","card","bill","loan","login","ui","performance", "AI", "other"
+    "transfer" ,"auth" ,"card" ,"bill" ,"loan" ,"login" ,"ui" ,"performance" , "ai assistant" ,"support" , "account" ,"other"
 }
 LEVELS = {"high","medium","low",None}
 
 
 def validate_output(obj: dict, original_text: str):
-    assert obj["type"] in ALLOWED_TYPES
-    assert obj["category"] in ALLOWED_CATEGORIES
-    assert obj["severity"] in LEVELS
-    assert obj["priority"] in LEVELS
+   
+    # assert obj["type"] in ALLOWED_TYPES
+    #############################################################
+    types = obj.get("type")
+
+    if types not in ALLOWED_TYPES:
+        logger.warning(
+            f"Invalid type '{types}' – replaced with 'other'"
+        )
+        obj["type"] = "other"
+    ##################################################################
+
+    # assert obj["category"] in ALLOWED_CATEGORIES
+
+    CATEGORY_MAP = {
+    "authentication": "auth",
+    "ai": "ai assistant",
+    "ai_assistant": "ai assistant",
+    "customer support": "support",
+}
+
+    category = obj.get("category", "").strip().lower()
+
+    if category in CATEGORY_MAP:
+        category = CATEGORY_MAP[category]
+    
+    # obj["category"] = obj.get("category", "").strip().lower()
+    # category = obj.get("category")
+
+    if category not in ALLOWED_CATEGORIES:
+        logger.warning(
+            f"Invalid category '{category}' – replaced with 'other'"
+        )
+        obj["category"] = "other"
+    ####################################################################
+    # assert obj["severity"] in LEVELS
+
+    severity = obj.get("severity")
+
+    if severity not in LEVELS:
+        logger.warning(
+            f"Invalid severity '{severity}' – replaced with 'none'"
+        )
+        obj["severity"] = "None"
+
+
+    # assert obj["priority"] in LEVELS
+
+    priority = obj.get("priority")
+    
+    if priority not in LEVELS:
+        logger.warning(
+            f"Invalid priority '{priority}' – replaced with 'none'"
+        )
+        obj["priority"] = "None"
 
     # evidence must be exact substring
     # assert obj["evidence"] in original_text
@@ -137,12 +189,7 @@ def validate_output(obj: dict, original_text: str):
     if re.search(r"[A-Za-z]", obj["normalized_title"]):
         logger.warning("English detected in normalized_title")
 
-    # for field in ["short_title", "normalized_title"]:
-    #     assert not re.search(r"[A-Za-z]", obj[field]), f"English in {field}"
-        
-
-    # for kw in obj["keywords"]:
-    #     assert not re.search(r"[A-Za-z]", kw), "English keyword detected"
+    
    
     cleaned_keywords = []
 
