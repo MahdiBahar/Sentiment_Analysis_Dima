@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
     # titles = ["دریافت تسهیلات","انتقال وجه","سایر","مدیریت حساب‌ها","کارت‌ها","دستیار هوشمند","پرداخت قبض","خرید شارژ"]
     # types = ["issue","suggestion","question","praise","other"]
-    # categories = ["transfer","auth","card","bill","loan","login","ui","performance", "AI assistant", "other"]
+    # categories = ["transfer","auth","card","bill","loan","login","ui","performance", "AI", "other"]
     # sentiments = ["very negative", "negative", "no sentiment expressed","positive", "very positive"]
 
     # titles = ["دریافت تسهیلات","انتقال وجه"]

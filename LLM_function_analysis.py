@@ -75,7 +75,7 @@ Rules:
 Allowed values:
 
 type: issue | suggestion | question | praise | other
-category: transfer | auth | card | bill | loan | login | ui | performance | AI assistant | other
+category: transfer | auth | card | bill | loan | login | ui | performance | AI | other
 severity / priority: high | medium | low | null
 
 - If unsure, use "other" for type and category.
@@ -111,7 +111,7 @@ Comment:
 ##############################################################################################
 ALLOWED_TYPES = {"issue","suggestion","question","praise","other"}
 ALLOWED_CATEGORIES = {
-    "transfer","auth","card","bill","loan","login","ui","performance", "AI assistant", "other"
+    "transfer","auth","card","bill","loan","login","ui","performance", "AI", "other"
 }
 LEVELS = {"high","medium","low",None}
 
