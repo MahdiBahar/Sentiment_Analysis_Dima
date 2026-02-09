@@ -18,6 +18,8 @@ from repetitive_detection import flag_repetitive_comments
 
 ######################################################################################
 
+from main_comment_analysis import run_comment_analysis_batch
+##################################################################################
 # Setup logger
 logger = setup_logger('rpc_server', 'rpc_server.log')
 # Initialize logger
@@ -26,7 +28,7 @@ logger_sentiment_dima = setup_logger(
     name="sentiment_analysis_dima",
     log_file="analyze_sentiment_dima.log"
 )
-
+logger_comment_analysis_dima = setup_logger(name="comment_analysis_dima", log_file="analyze_comment_dima.log")
 
 # Global dictionary to track tasks
 tasks_status = {}
@@ -79,7 +81,6 @@ def perform_task(task_id, task_function, *args):
             tasks_status[task_id]["error"] = str(e)
 
         logger.error(f"Task {task_id} failed: {e}", exc_info=True)
-
 
 
 @dispatcher.add_method
@@ -265,6 +266,55 @@ def sentiment_analysis_dima(limit=100):
         "message": "Task started: Dima sentiment analysis"
     }
 
+############################################################################################################################
+
+@dispatcher.add_method
+def comment_analysis_dima():
+
+    global tasks_status
+
+    task_id = str(len(tasks_status) + 1)
+
+    with tasks_lock:
+        tasks_status[task_id] = {
+            "status": "started",
+            "description": "Performing LLM comment analysis for Dima",
+            "result": None,
+            "error": None
+        }
+
+    def wrapped_task():
+        try:
+            with gpu_lock:
+                logger_comment_analysis_dima.info(
+                    "Starting LLM comment analysis for Dima..."
+                )
+
+                result = run_comment_analysis_batch(
+                    logger_comment_analysis_dima
+                )
+
+            return result
+
+        except Exception as e:
+            logger_comment_analysis_dima.error(
+                f"Fatal error in comment analysis task: {e}",
+                exc_info=True
+            )
+            raise
+
+    threading.Thread(
+        target=perform_task,
+        args=(task_id, wrapped_task)
+    ).start()
+
+    return {
+        "task_id": task_id,
+        "message": "Task started: LLM comment analysis for Dima"
+    }
+
+
+#############################################################################################################################
 
 def fetch_and_crawl_comments_apps(app_ids):
     logger.info("Fetching app URLs and crawling comments from app_comments...")
