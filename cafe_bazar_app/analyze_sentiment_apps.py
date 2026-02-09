@@ -13,7 +13,7 @@ load_dotenv()
 
 # Fetch comments that need sentiment analysis for a specific app
 def fetch_comments_to_analyze_apps(logger, app_id):
-    logger.info(f"Fetching comments for app_id: {app_id}")
+    logger.info(f"Fetching comments for app_id: {app_id} from app_comments")
     try:
         conn = connect_db()
         cursor = conn.cursor()
@@ -29,7 +29,7 @@ def fetch_comments_to_analyze_apps(logger, app_id):
         conn.close()
         return comments
     except Exception as e:
-        logger.error(f"Error fetching comments: {e}", exc_info=True)
+        logger.error(f"Error fetching comments from app_comments: {e}", exc_info=True)
         return []
 
 # Update the comment table with the sentiment result and sentiment score
@@ -49,12 +49,12 @@ def update_sentiment_apps(logger, comment_id, sentiment_result, sentiment_score,
         conn.close()
         # logger.info(f"Successfully updated comment_id: {comment_id}")
     except Exception as e:
-        logger.error(f"Error updating sentiment for comment_id: {comment_id}: {e}", exc_info=True)
+        logger.error(f"Error updating sentiment from app_comments for comment_id: {comment_id}: {e}", exc_info=True)
 
 
 # Main function to fetch comments for a specific app_id and update sentiments
 def analyze_and_update_sentiment(logger, comments, app_id):
-    logger.info(f"Starting sentiment analysis for app_id: {app_id}")
+    logger.info(f"Starting sentiment analysis for app_id: {app_id} from app_comments")
     for comment_id, comment_text, comment_rating in comments:
         try:
             logger.info(f"Analyzing sentiment for comment_id: {comment_id}")

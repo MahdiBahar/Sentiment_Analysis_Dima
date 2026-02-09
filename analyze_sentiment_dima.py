@@ -24,12 +24,12 @@ def fetch_comments_to_analyze(logger, limit=100):
         """
         cursor.execute(query, (limit,))
         comments = cursor.fetchall()
-        logger.info(f"Fetched {len(comments)} comments for analysis.")
+        logger.info(f"Fetched {len(comments)} comments for analysis from dima_comments.")
         cursor.close()
         conn.close()
         return comments
     except Exception as e:
-        logger.error(f"Error fetching comments: {e}", exc_info=True)
+        logger.error(f"Error fetching comments from dima_comments: {e}", exc_info=True)
         return []
 
 
@@ -48,13 +48,13 @@ def update_sentiment_dima(logger,id, sentiment_result, sentiment_score, second_m
         cursor.close()
         conn.close()
     except Exception as e:
-        logger.error(f"Error updating sentiment for comment_id: {id}: {e}", exc_info=True)
+        logger.error(f"Error updating sentiment from dima_comments for comment_id: {id}: {e}", exc_info=True)
 
 
 
 # Main function to fetch comments for dima application and update sentiments
 def analyze_and_update_sentiment(logger, comments):
-    logger.info("Starting sentiment analysis")
+    logger.info("Starting sentiment analysis from dima_comments")
     for comment_id, comment_text, comment_rating in comments:
         try:
             logger.info(f"Analyzing sentiment for comment_id: {comment_id}")

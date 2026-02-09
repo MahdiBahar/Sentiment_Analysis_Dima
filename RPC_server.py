@@ -115,7 +115,7 @@ def sentiment_analysis(app_ids):
     task_id = str(len(tasks_status) + 1)
     with tasks_lock:
         tasks_status[task_id] = {"status": "started", "description": "Performing sentiment analysis"}
-    logger.info(f"Task {task_id} started: Performing sentiment analysis for app_ids {app_ids}")
+    logger.info(f"Task {task_id} started: Performing sentiment analysis from app_comments for app_ids {app_ids}")
 
     def wrapped_task():
         crawl_event.wait()  # Wait for crawling to complete
@@ -123,7 +123,7 @@ def sentiment_analysis(app_ids):
             analyze_sentiments(app_ids)
 
     threading.Thread(target=perform_task, args=(task_id, wrapped_task)).start()
-    return {"task_id": task_id, "message": "Task started: Sentiment analysis"}
+    return {"task_id": task_id, "message": "Task started: Sentiment analysis from app_comments"}
 
 
 @dispatcher.add_method
@@ -225,7 +225,7 @@ def sentiment_analysis_dima(limit=100):
         # 🔐 GPU protected block
         with gpu_lock:
 
-            logger_sentiment_dima.info("Checking repetitive comments...")
+            logger_sentiment_dima.info("Checking repetitive comments from dima_comments...")
             count = flag_repetitive_comments()
             logger_sentiment_dima.info(f"Duplicate detection finished. Flagged {count} comments.")
 
@@ -267,29 +267,29 @@ def sentiment_analysis_dima(limit=100):
 
 
 def fetch_and_crawl_comments(app_ids):
-    logger.info("Fetching app URLs and crawling comments...")
+    logger.info("Fetching app URLs and crawling comments from app_comments...")
     apps = fetch_app_urls_to_crawl(app_ids)
     for app_id, app_url in apps:
         try:
-            logger.info(f"Starting to crawl comments for app_id {app_id} at {app_url}")
+            logger.info(f"Starting to crawl comments from app_comments for app_id {app_id} at {app_url}")
             crawl_comments(app_id, app_url)
-            logger.info(f"Finished crawling comments for app_id {app_id}")
+            logger.info(f"Finished crawling comments from app_comments for app_id {app_id}")
         except Exception as e:
-            logger.error(f"Error crawling comments for app_id {app_id}: {e}", exc_info=True)
+            logger.error(f"Error crawling comments from app_comments for app_id {app_id}: {e}", exc_info=True)
 
 
 def analyze_sentiments(app_ids):
-    logger.info("Starting sentiment analysis...")
+    logger.info("Starting sentiment analysis from app_comments...")
     for app_id in app_ids:
         try:
             comments = fetch_comments_to_analyze_apps(logger_sentiment_apps,app_id)
             if not comments:
-                logger.info(f"No comments left to analyze for app_id {app_id}")
+                logger.info(f"No comments left to analyze from app_comments for app_id {app_id}")
                 continue
             analyze_and_update_sentiment(logger_sentiment_apps,comments, app_id)
-            logger.info(f"Sentiment analysis completed for app_id {app_id}")
+            logger.info(f"Sentiment analysis completed from app_comments for app_id {app_id}")
         except Exception as e:
-            logger.error(f"Error during sentiment analysis for app_id {app_id}: {e}", exc_info=True)
+            logger.error(f"Error during sentiment analysis from app_comments for app_id {app_id}: {e}", exc_info=True)
 
 
 if __name__ == "__main__":
