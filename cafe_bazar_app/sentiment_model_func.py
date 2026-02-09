@@ -46,20 +46,12 @@ def load_models():
     # translator = Translator()
     translator = GoogleTranslator(source="auto", target="en")
     # Sentiment mapping for scoring
-    SENTIMENT_SCORES = {
-        "very negative": -2,
-        "negative": -1,
-        "neutral": 0,
-        "mixed": 0,
-        "positive": 1,
-        "very positive": 2,
-        "no sentiment expressed": 0
-    }
+    
 
 
-    return tokenizer, model, classifier, translator, SENTIMENT_SCORES
+    return tokenizer, model, classifier, translator
 
-tokenizer, model, classifier, translator, SENTIMENT_SCORES = load_models()
+tokenizer, model, classifier, translator = load_models()
 
 
 def run_first_model(logger,context, text_b="نظر شما چیست", **generator_args):
@@ -97,7 +89,7 @@ def run_second_model(logger, comment_text):
         return "no sentiment expressed"
 
 # Validate sentiment result and assign score
-def validate_and_score_sentiment(logger, sentiment_result):
+def validate_and_score_sentiment(logger, sentiment_result, SENTIMENT_SCORES):
     sentiment_result = sentiment_result.lower()
     if sentiment_result not in SENTIMENT_SCORES:
         sentiment_result = "no sentiment expressed"

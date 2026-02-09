@@ -76,11 +76,20 @@ def analyze_and_update_sentiment(logger, comments, app_id):
                     print("second_model is used")
                 # Otherwise, retain "no sentiment expressed"
 
-            sentiment_result, sentiment_score = validate_and_score_sentiment(logger,sentiment_result)
+            SENTIMENT_SCORES = {
+                        "very negative": -2,
+                        "negative": -1,
+                        "neutral": 0,
+                        "mixed": 0,
+                        "positive": 1,
+                        "very positive": 2,
+                        "no sentiment expressed": 0
+                    }
+            sentiment_result, sentiment_score = validate_and_score_sentiment(logger,sentiment_result,SENTIMENT_SCORES)
             update_sentiment_apps(logger, comment_id, sentiment_result, sentiment_score, second_model_processed)
             logger.info(f"Updated comment_id: {comment_id} with sentiment: {sentiment_result}, score: {sentiment_score}")
         except Exception as e:
             logger.error(f"Error processing comment_id: {comment_id}: {e}", exc_info=True)
             update_sentiment_apps(logger, comment_id, "Missed Value", 11, False)
             continue
-        time.sleep(0.3)
+        time.sleep(20)

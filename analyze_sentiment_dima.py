@@ -18,7 +18,7 @@ def fetch_comments_to_analyze(logger, limit=100):
         query = """
             SELECT id, description, grade
             FROM dima_comments
-            WHERE sentiment_result IS NULL
+            WHERE sentiment_result IS NULL OR sentiment_result=''
             ORDER BY id ASC
             LIMIT %s;
         """
@@ -85,8 +85,17 @@ def analyze_and_update_sentiment(logger, comments):
                     sentiment_result = "positive"
                     second_model_processed = True
                     print("second_model is used")
-
-            sentiment_result, sentiment_score = validate_and_score_sentiment(logger,sentiment_result)
+            SENTIMENT_SCORES = {
+                        "very negative": 1,
+                        "negative": 2,
+                        "neutral": 3,
+                        "mixed": 3,
+                        "positive": 4,
+                        "very positive": 5,
+                        "no sentiment expressed": 3
+                    }
+            sentiment_result, sentiment_score = validate_and_score_sentiment(logger,sentiment_result,SENTIMENT_SCORES)
+            # sentiment_result, sentiment_score = validate_and_score_sentiment(logger,sentiment_result)
             update_sentiment_dima (logger,comment_id, sentiment_result, sentiment_score, second_model_processed)
 
             logger.info(f"Updated comment_id: {comment_id} with sentiment: {sentiment_result}, score: {sentiment_score}")
@@ -95,4 +104,4 @@ def analyze_and_update_sentiment(logger, comments):
             update_sentiment_dima (logger,comment_id, "Missed Value", 11, False)
             continue
 
-        time.sleep(0.3)
+        time.sleep(20)
