@@ -8,13 +8,32 @@ from cafe_bazar_app.app_scraper_check import give_information_app, check_and_cre
 from cafe_bazar_app.analyze_sentiment_apps import fetch_comments_to_analyze_apps, analyze_and_update_sentiment
 from cafe_bazar_app.logging_config import setup_logger
 from Ngram import run_ngram_analysis
+
+#####################################################
+from analyze_sentiment_dima import (
+    analyze_and_update_sentiment as analyze_and_update_sentiment_dima,
+    fetch_comments_to_analyze as fetch_comments_to_analyze_dima
+)
+from repetitive_detection import flag_repetitive_comments
+
+######################################################################################
+
 # Setup logger
 logger = setup_logger('rpc_server', 'rpc_server.log')
 # Initialize logger
 logger_sentiment_apps = setup_logger(name="sentiment_analysis_cafe_bazar", log_file="analyze_sentiment_apps.log")
+logger_sentiment_dima = setup_logger(
+    name="sentiment_analysis_dima",
+    log_file="analyze_sentiment_dima.log"
+)
+
+
 # Global dictionary to track tasks
 tasks_status = {}
 tasks_lock = threading.Lock()
+
+# GPU lock (only one GPU task at a time)
+gpu_lock = threading.Lock()
 
 # Event for synchronization
 crawl_event = threading.Event()  # Signaled when crawling is complete
@@ -68,7 +87,8 @@ def crawl_comment(app_ids):
     global tasks_status, crawl_event
 
     crawl_event.clear()
-    task_id = "1"
+    # task_id = "1"
+    task_id = str(len(tasks_status) + 1)
 
     # Immediately respond that the task has started
     with tasks_lock:
@@ -91,14 +111,16 @@ def crawl_comment(app_ids):
 def sentiment_analysis(app_ids):
     global tasks_status, crawl_event
 
-    task_id = "2"
+    # task_id = "2"
+    task_id = str(len(tasks_status) + 1)
     with tasks_lock:
         tasks_status[task_id] = {"status": "started", "description": "Performing sentiment analysis"}
     logger.info(f"Task {task_id} started: Performing sentiment analysis for app_ids {app_ids}")
 
     def wrapped_task():
         crawl_event.wait()  # Wait for crawling to complete
-        analyze_sentiments(app_ids)
+        with gpu_lock:
+            analyze_sentiments(app_ids)
 
     threading.Thread(target=perform_task, args=(task_id, wrapped_task)).start()
     return {"task_id": task_id, "message": "Task started: Sentiment analysis"}
@@ -178,6 +200,70 @@ def ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
         "message": "Task started: Ngram analysis"
     }
 
+
+##########################
+@dispatcher.add_method
+def sentiment_analysis_dima(limit=100):
+
+    global tasks_status
+
+    task_id = str(len(tasks_status) + 1)
+
+    with tasks_lock:
+        tasks_status[task_id] = {
+            "status": "started",
+            "description": "Performing sentiment analysis for Dima",
+            "result": None,
+            "error": None
+        }
+
+    if limit is not None:
+        limit = int(limit)
+
+    def wrapped_task():
+
+        # 🔐 GPU protected block
+        with gpu_lock:
+
+            logger_sentiment_dima.info("Checking repetitive comments...")
+            count = flag_repetitive_comments()
+            logger_sentiment_dima.info(f"Duplicate detection finished. Flagged {count} comments.")
+
+            logger_sentiment_dima.info("Starting Dima sentiment analysis...")
+
+            total_processed = 0
+
+            while True:
+                comments = fetch_comments_to_analyze_dima(
+                    logger_sentiment_dima,
+                    limit=limit
+                )
+
+                if not comments:
+                    break
+
+                analyze_and_update_sentiment_dima(
+                    logger_sentiment_dima,
+                    comments
+                )
+
+                total_processed += len(comments)
+
+            logger_sentiment_dima.info("Dima sentiment analysis completed.")
+
+            return {
+                "processed_comments": total_processed
+            }
+
+    threading.Thread(
+        target=perform_task,
+        args=(task_id, wrapped_task)
+    ).start()
+
+    return {
+        "task_id": task_id,
+        "message": "Task started: Dima sentiment analysis"
+    }
 
 
 def fetch_and_crawl_comments(app_ids):
