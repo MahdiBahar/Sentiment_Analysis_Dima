@@ -75,10 +75,9 @@ Rules:
 Allowed values:
 
 type: issue | suggestion | question | praise | other
-category: transfer | auth | card | bill | loan | login | ui | performance | ai assistant | support | account |other
+category: transfer | auth | card | bill | loan | login | ui | performance | ai assistant | support | account | security | notification
 severity / priority: high | medium | low | null
 
-- If unsure, use "other" for type and category.
 - If find more than one categories for comment, just choose one and ignore other options.
 
 JSON format:
@@ -112,7 +111,7 @@ Comment:
 ##############################################################################################
 ALLOWED_TYPES = {"issue","suggestion","question","praise","other"}
 ALLOWED_CATEGORIES = {
-    "transfer" ,"auth" ,"card" ,"bill" ,"loan" ,"login" ,"ui" ,"performance" , "ai assistant" ,"support" , "account" ,"other"
+    "transfer" ,"auth" ,"card" ,"bill" ,"loan" ,"login" ,"ui" ,"performance" , "ai assistant" ,"support" , "account", "security", "notification"
 }
 LEVELS = {"high","medium","low",None}
 
