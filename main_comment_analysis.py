@@ -50,7 +50,10 @@ def run_comment_analysis_batch(logger):
 
                 # analysis["processed_at"] = datetime.now(timezone.utc).isoformat()
 
-                analysis["processed_at"] = datetime.now(timezone.utc).isoformat()
+                # analysis["processed_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
+
+                # analysis["processed_at"] = datetime.utcnow().isoformat()
+
 
                 analysis["created_at"] = (
                     c["created_at"].isoformat()

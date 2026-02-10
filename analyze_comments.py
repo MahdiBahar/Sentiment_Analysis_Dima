@@ -60,7 +60,7 @@ def fetch_comments_to_analyze():
 #################################################################################\
 def upsert_comment_analysis(conn, analysis):
     query = """
-        INSERT INTO dima_comments_analysis (
+                INSERT INTO dima_comments_analysis (
             comment_id,
             created_at,
             sentiment_result,
@@ -90,7 +90,7 @@ def upsert_comment_analysis(conn, analysis):
             %(priority)s,
             %(evidence)s,
             %(model)s,
-            %(processed_at)s
+            CURRENT_TIMESTAMP
         )
         ON CONFLICT (comment_id)
         DO UPDATE SET
@@ -105,7 +105,8 @@ def upsert_comment_analysis(conn, analysis):
             priority = EXCLUDED.priority,
             evidence = EXCLUDED.evidence,
             model = EXCLUDED.model,
-            processed_at = EXCLUDED.processed_at;
+            processed_at = CURRENT_TIMESTAMP;
+
     """
 
     with conn.cursor() as cur:
