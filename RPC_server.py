@@ -191,10 +191,12 @@ def list_tasks():
         return {
             task_id: {
                 "status": task["status"],
-                "description": task["description"]
+                "description": task["description"],
+                "error": task.get("error")
             }
             for task_id, task in tasks_status.items()
         }
+
 
 @dispatcher.add_method
 def ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
