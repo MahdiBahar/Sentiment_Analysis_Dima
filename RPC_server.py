@@ -104,8 +104,8 @@ def crawl_comment(app_ids):
     global tasks_status, crawl_event
 
     crawl_event.clear()
-    # task_id = "1"
-    task_id = str(len(tasks_status) + 1)
+    task_id = "1"
+    # task_id = str(len(tasks_status) + 1)
 
     # Immediately respond that the task has started
     with tasks_lock:
@@ -128,8 +128,8 @@ def crawl_comment(app_ids):
 def sentiment_analysis_apps(app_ids):
     global tasks_status, crawl_event
 
-    # task_id = "2"
-    task_id = str(len(tasks_status) + 1)
+    task_id = "2"
+    # task_id = str(len(tasks_status) + 1)
     with tasks_lock:
         tasks_status[task_id] = {"status": "started", "description": "Performing sentiment analysis for app comments"}
     logger.info(f"Task {task_id} started: Performing sentiment analysis from app_comments for app_ids {app_ids}")
@@ -188,8 +188,8 @@ def check_task_status(task_id):
 @dispatcher.add_method
 def ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
 
-    # task_id = "5"
-    task_id = str(len(tasks_status) + 1)
+    task_id = "5"
+    # task_id = str(len(tasks_status) + 1)
     # import uuid
     # task_id = str(uuid.uuid4())
     
@@ -229,8 +229,8 @@ def sentiment_analysis_dima(limit=100):
 
     global tasks_status
 
-    # task_id = "3"
-    task_id = str(len(tasks_status) + 1)
+    task_id = "3"
+    # task_id = str(len(tasks_status) + 1)
 
     with tasks_lock:
         tasks_status[task_id] = {
@@ -295,8 +295,8 @@ def sentiment_analysis_dima(limit=100):
 def comment_analysis_dima():
 
     global tasks_status
-    # task_id = "4"
-    task_id = str(len(tasks_status) + 1)
+    task_id = "4"
+    # task_id = str(len(tasks_status) + 1)
 
     with tasks_lock:
         tasks_status[task_id] = {
