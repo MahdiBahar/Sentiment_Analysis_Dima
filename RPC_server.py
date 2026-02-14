@@ -184,6 +184,17 @@ def check_task_status(task_id):
             "error": task.get("error")
         }
 
+## status of all tasks
+@dispatcher.add_method
+def list_tasks():
+    with tasks_lock:
+        return {
+            task_id: {
+                "status": task["status"],
+                "description": task["description"]
+            }
+            for task_id, task in tasks_status.items()
+        }
 
 @dispatcher.add_method
 def ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
