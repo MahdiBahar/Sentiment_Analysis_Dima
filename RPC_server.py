@@ -57,16 +57,27 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 
 # Helper function to simulate long tasks
-def perform_task(task_id, task_function, *args):
+def perform_task(task_id, task_function, use_gpu=False, *args):
     global tasks_status
 
-    with tasks_lock:
-        tasks_status[task_id]["status"] = "working"
-
     try:
-        logger.info(f"Starting task {task_id}: {tasks_status[task_id]['description']}")
+        # 🔐 GPU-aware handling
+        acquired = False
 
-        # 🔥 Capture result
+
+        if use_gpu:
+            if not gpu_lock.acquire(blocking=False):
+                with tasks_lock:
+                    tasks_status[task_id]["status"] = "waiting_gpu"
+
+                gpu_lock.acquire()
+
+            acquired = True
+
+        with tasks_lock:
+            tasks_status[task_id]["status"] = "working"
+
+        logger.info(f"Starting task {task_id}: {tasks_status[task_id]['description']}")
         result = task_function(*args)
 
         with tasks_lock:
@@ -81,6 +92,11 @@ def perform_task(task_id, task_function, *args):
             tasks_status[task_id]["error"] = str(e)
 
         logger.error(f"Task {task_id} failed: {e}", exc_info=True)
+
+    finally:
+        if use_gpu and acquired:
+            gpu_lock.release()
+
 
 
 @dispatcher.add_method
@@ -115,15 +131,19 @@ def sentiment_analysis_apps(app_ids):
     # task_id = "2"
     task_id = str(len(tasks_status) + 1)
     with tasks_lock:
-        tasks_status[task_id] = {"status": "started", "description": "Performing sentiment analysis"}
+        tasks_status[task_id] = {"status": "started", "description": "Performing sentiment analysis for app comments"}
     logger.info(f"Task {task_id} started: Performing sentiment analysis from app_comments for app_ids {app_ids}")
 
     def wrapped_task():
         crawl_event.wait()  # Wait for crawling to complete
-        with gpu_lock:
-            analyze_sentiments_apps(app_ids)
+        # with gpu_lock:
+        analyze_sentiments_apps(app_ids)
 
-    threading.Thread(target=perform_task, args=(task_id, wrapped_task)).start()
+    threading.Thread(
+        target=perform_task,
+        args=(task_id, wrapped_task),
+        kwargs={"use_gpu": True}
+    ).start()
     return {"task_id": task_id, "message": "Task started: Sentiment analysis from app_comments"}
 
 
@@ -168,6 +188,7 @@ def check_task_status(task_id):
 @dispatcher.add_method
 def ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
 
+    # task_id = "5"
     task_id = str(len(tasks_status) + 1)
     # import uuid
     # task_id = str(uuid.uuid4())
@@ -208,6 +229,7 @@ def sentiment_analysis_dima(limit=100):
 
     global tasks_status
 
+    # task_id = "3"
     task_id = str(len(tasks_status) + 1)
 
     with tasks_lock:
@@ -224,42 +246,43 @@ def sentiment_analysis_dima(limit=100):
     def wrapped_task():
 
         # 🔐 GPU protected block
-        with gpu_lock:
+        # with gpu_lock:
 
-            logger_sentiment_dima.info("Checking repetitive comments from dima_comments...")
-            count = flag_repetitive_comments()
-            logger_sentiment_dima.info(f"Duplicate detection finished. Flagged {count} comments.")
+        logger_sentiment_dima.info("Checking repetitive comments from dima_comments...")
+        count = flag_repetitive_comments()
+        logger_sentiment_dima.info(f"Duplicate detection finished. Flagged {count} comments.")
 
-            logger_sentiment_dima.info("Starting Dima sentiment analysis...")
+        logger_sentiment_dima.info("Starting Dima sentiment analysis...")
 
-            total_processed = 0
+        total_processed = 0
 
-            while True:
-                comments = fetch_comments_to_analyze_dima(
-                    logger_sentiment_dima,
-                    limit=limit
-                )
+        while True:
+            comments = fetch_comments_to_analyze_dima(
+                logger_sentiment_dima,
+                limit=limit
+            )
 
-                if not comments:
-                    break
+            if not comments:
+                break
 
-                analyze_and_update_sentiment_dima(
-                    logger_sentiment_dima,
-                    comments
-                )
+            analyze_and_update_sentiment_dima(
+                logger_sentiment_dima,
+                comments
+            )
 
-                total_processed += len(comments)
+            total_processed += len(comments)
 
-            logger_sentiment_dima.info("Dima sentiment analysis completed.")
+        logger_sentiment_dima.info("Dima sentiment analysis completed.")
 
-            return {
-                "processed_comments": total_processed
-            }
+        return {
+            "processed_comments": total_processed
+        }
 
     threading.Thread(
-        target=perform_task,
-        args=(task_id, wrapped_task)
-    ).start()
+    target=perform_task,
+    args=(task_id, wrapped_task),
+    kwargs={"use_gpu": True}
+).start()
 
     return {
         "task_id": task_id,
@@ -272,7 +295,7 @@ def sentiment_analysis_dima(limit=100):
 def comment_analysis_dima():
 
     global tasks_status
-
+    # task_id = "4"
     task_id = str(len(tasks_status) + 1)
 
     with tasks_lock:
@@ -285,14 +308,14 @@ def comment_analysis_dima():
 
     def wrapped_task():
         try:
-            with gpu_lock:
-                logger_comment_analysis_dima.info(
-                    "Starting LLM comment analysis for Dima..."
-                )
+            # with gpu_lock:
+            logger_comment_analysis_dima.info(
+                "Starting LLM comment analysis for Dima..."
+            )
 
-                result = run_comment_analysis_batch(
-                    logger_comment_analysis_dima
-                )
+            result = run_comment_analysis_batch(
+                logger_comment_analysis_dima
+            )
 
             return result
 
@@ -304,9 +327,10 @@ def comment_analysis_dima():
             raise
 
     threading.Thread(
-        target=perform_task,
-        args=(task_id, wrapped_task)
-    ).start()
+    target=perform_task,
+    args=(task_id, wrapped_task),
+    kwargs={"use_gpu": True}
+).start()
 
     return {
         "task_id": task_id,
