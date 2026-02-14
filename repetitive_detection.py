@@ -23,7 +23,7 @@ def flag_repetitive_comments():
         query = """
             SELECT id, national_code_hash, title, description, created_at, sentiment_result
             FROM dima_comments
-            WHERE description IS NOT NULL AND description != '' AND sentiment_result is NULL
+            WHERE description IS NOT NULL AND description != '' AND (sentiment_result IS NULL OR sentiment_result='') 
             ORDER BY national_code_hash, created_at;
         """
         df = pd.read_sql(query, conn)
