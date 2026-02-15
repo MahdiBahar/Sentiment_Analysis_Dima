@@ -73,12 +73,14 @@ Rules:
 - keywords MUST be Persian.
 
 Allowed values:
-
-type: issue | suggestion | question | praise | other
+type: issue | suggestion | question | praise | criticism | other
 category: transfer | auth | card | bill | loan | login | ui | performance | ai assistant | support | account | security | notification
 severity / priority: high | medium | low | null
 
 - If find more than one categories for comment, just choose one and ignore other options.
+- If the comment contains phrases like:
+حرف نداره or عالیه or خیلی خوبه or واقعا خوبه or دمتون گرم or دستتون درد نکنه or خسته نباشید,
+It must be classified as praise even if structure contains contrast words.
 
 JSON format:
 
@@ -103,13 +105,18 @@ JSON format:
 Comment:
 {comment_text}
 """
-
+# - If the comment describes a specific technical or functional problem, classify as issue cattegory. If it only expresses dissatisfaction without details, classify as criticism.
+# - examples:
+# - example 1 : .این برنامه برای بانک ملت لازم بود واقعا که حرف نداره
+# - result for type : praise
+# - example 2 : نه خوب نه بعد
+# - result for type : other
 ## "comment_id": "{comment_id}",
 ## "created_at": "{created_at}",
 ## "sentiment_result": "{sentiment_result}",
 ##"model": "{model}",
 ##############################################################################################
-ALLOWED_TYPES = {"issue","suggestion","question","praise","other"}
+ALLOWED_TYPES = {"issue","suggestion","question","praise","criticism","other"}
 ALLOWED_CATEGORIES = {
     "transfer" ,"auth" ,"card" ,"bill" ,"loan" ,"login" ,"ui" ,"performance" , "ai assistant" ,"support" , "account", "security", "notification"
 }

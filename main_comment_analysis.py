@@ -31,9 +31,27 @@ def infer_type_from_sentiment(sentiment_result: str):
         return "praise"
 
     if sentiment in ["negative", "very negative"]:
-        return "issue"
+        return "criticism"
 
     return "other"
+
+neutral_phrases = [
+    "بد نیست",
+        "بد‌نیست",
+        "بد نبود",
+        "بدک نیست",
+        "بدی نیست",
+    "نظری ندارم",
+    "نظر خاصی ندارم",
+   "نه خوب نه بعد",
+    "معمولی",
+]
+
+def force_neutral(text):
+    for phrase in neutral_phrases:
+        if phrase in text:
+            return True
+    return False
 
 
 def run_comment_analysis_batch(logger):
@@ -72,6 +90,12 @@ def run_comment_analysis_batch(logger):
 
                     category = infer_category_from_title(c.get("title"),TITLE_CATEGORY_MAP)
                     inferred_type = infer_type_from_sentiment(c.get("sentiment_result"))
+                    
+                    if force_neutral(c.get("comment_text")):
+                        forced_type = "other"
+                        logger.info(f"force_neutral detected in short comment for {c['comment_id']} — mapping to others")
+                        inferred_type = forced_type
+
 
                     analysis = {
                         "comment_id": c["comment_id"],
@@ -121,6 +145,12 @@ def run_comment_analysis_batch(logger):
                     if analysis["category"] == "ai assistant":
 
                         analysis["category"] = "ai"    
+                    
+                    if force_neutral(c.get("comment_text")):
+                        forced_type = "other"
+                        logger.info(f"force_neutral detected for {c['comment_id']} — mapping to others")
+                        analysis["type"] = forced_type
+
                     
                     analysis["title"] = c["title"]
                     analysis["comment_id"] = c["comment_id"]
