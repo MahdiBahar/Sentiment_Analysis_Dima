@@ -8,6 +8,33 @@ from cafe_bazar_app.logging_config import setup_logger  # Import logger setup fu
 
 load_dotenv()
 
+def infer_category_from_title(title: str, title_category_map):
+    if not title:
+        return "other"
+
+    norm_title = normalize_for_match(title)
+
+    for keyword, category in title_category_map.items():
+        if normalize_for_match(keyword) in norm_title:
+            return category
+
+    return "other"
+
+
+def infer_type_from_sentiment(sentiment_result: str):
+    if not sentiment_result:
+        return "other"
+
+    sentiment = sentiment_result.strip().lower()
+
+    if sentiment in ["positive", "very positive"]:
+        return "praise"
+
+    if sentiment in ["negative", "very negative"]:
+        return "issue"
+
+    return "other"
+
 
 def run_comment_analysis_batch(logger):
     comments = fetch_comments_to_analyze()
@@ -19,57 +46,89 @@ def run_comment_analysis_batch(logger):
     conn = connect_db()
     processed_count = 0
     failed_count = 0
+    TITLE_CATEGORY_MAP = {
+        "دریافت تسهیلات": "loan",
+        "انتقال وجه": "transfer",
+        "کارت‌ها": "card",
+        "پرداخت قبض": "bill",
+        "خرید شارژ": "bill",
+        "دستیار هوشمند": "ai",
+        "مدیریت حساب‌ها": "account",
+        "سایر": "other",
+    }
     DRY_RUN = False
     try:
         for c in comments:
             try:
-                # len_comment = normalize_for_match(text=c.get("comment_text")) 
-                # # if len(len_comment.split())<3:
-                # #     # logger.info(f"The length of this comment with {c['comment_id']} id is {len(len_comment.split())}")
-                # #     continue
+                
                 if c.get("is_analyzed"):
                     logger.info(f"This comment with {c['comment_id']} id is analyzed before")
                     continue
                 
-                logger.info(f"Analyzing comment {c['comment_id']}")
-                model = "phi4"
-                raw_analysis = call_LLM_single_comment(
-                        comment_id=str(c["comment_id"]),
-                        comment_text=c["comment_text"],
-                        sentiment_result=c["sentiment_result"],
-                        created_at=c["created_at"],
-                        model=model,
-                        retries=2
+                len_comment = normalize_for_match(text=c.get("comment_text")) 
+                if len(len_comment.split())<3:
+                    # logger.info(f"The length of this comment with {c['comment_id']} id is {len(len_comment.split())}")
+                    logger.info(f"Short comment detected for {c['comment_id']} — using title mapping")
+
+                    category = infer_category_from_title(c.get("title"),TITLE_CATEGORY_MAP)
+                    inferred_type = infer_type_from_sentiment(c.get("sentiment_result"))
+
+                    analysis = {
+                        "comment_id": c["comment_id"],
+                        "created_at": (
+                            c["created_at"].isoformat()
+                            if hasattr(c["created_at"], "isoformat")
+                            else c["created_at"]
+                        ),
+                          "sentiment_result": c["sentiment_result"],
+                            "title": c["title"],
+                            "type": inferred_type,
+                            "category": category,
+                            "short_title": c["title"],
+                            "normalized_title": normalize_for_match(c["title"]),
+                            "keywords": ["عمومی"],
+                            "severity": None,
+                            "priority": None,
+                            "evidence": c["comment_text"],
+                            "model": "rule_based_short_comment"
+                    }
+
+                else:
+
+                    logger.info(f"Analyzing comment {c['comment_id']}")
+                    model = "phi4"
+                    raw_analysis = call_LLM_single_comment(
+                            comment_id=str(c["comment_id"]),
+                            comment_text=c["comment_text"],
+                            sentiment_result=c["sentiment_result"],
+                            created_at=c["created_at"],
+                            model=model,
+                            retries=2
+                        )
+
+
+                    if not raw_analysis or not raw_analysis.strip():
+                        raise RuntimeError("LLM returned empty output")
+
+                    analysis  = extract_json(raw_analysis)
+
+                    analysis["created_at"] = (
+                        c["created_at"].isoformat()
+                        if hasattr(c["created_at"], "isoformat")
+                        else c["created_at"]
                     )
+                    # analysis["created_at"] = c["created_at"]
+                    if analysis["category"] == "ai assistant":
+
+                        analysis["category"] = "ai"    
+                    
+                    analysis["title"] = c["title"]
+                    analysis["comment_id"] = c["comment_id"]
+                    
+                    analysis["sentiment_result"] = c["sentiment_result"]
+                    analysis["model"] = model
 
 
-                if not raw_analysis or not raw_analysis.strip():
-                    raise RuntimeError("LLM returned empty output")
-
-                analysis  = extract_json(raw_analysis)
-
-                # analysis["processed_at"] = datetime.now(timezone.utc).isoformat()
-
-                # analysis["processed_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
-
-                # analysis["processed_at"] = datetime.utcnow().isoformat()
-
-
-                analysis["created_at"] = (
-                    c["created_at"].isoformat()
-                    if hasattr(c["created_at"], "isoformat")
-                    else c["created_at"]
-                )
-                # analysis["created_at"] = c["created_at"]
-                if analysis["category"] == "ai assistant":
-
-                    analysis["category"] = "ai"    
-                
-                analysis["title"] = c["title"]
-                analysis["comment_id"] = c["comment_id"]
-                
-                analysis["sentiment_result"] = c["sentiment_result"]
-                analysis["model"] = model
                 validate_output(analysis, c["comment_text"])
 
 
@@ -89,8 +148,8 @@ def run_comment_analysis_batch(logger):
                     with conn: 
                         upsert_comment_analysis(conn, analysis)
                         logger.info(f"comment {c['comment_id']} is inserted to comment analysis table properly")
-                        mark_comment_as_analyzed(conn, c["comment_id"])
-                        logger.info(f"comment {c['comment_id']} is changed to is_analyzed")
+                        # mark_comment_as_analyzed(conn, c["comment_id"])
+                        # logger.info(f"comment {c['comment_id']} is changed to is_analyzed")
 
                         processed_count += 1
 
