@@ -96,8 +96,9 @@ crawl_url = 'https://cafebazaar.ir/app/ir.divar'
 
 if __name__ == "__main__":
     # app_ids = [23,24,25,26,27,28,29,30,31,32,33,34,35,36,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]  # Example app IDs
-    app_ids = [28]
-    # app_ids = [8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]
+    app_ids = [23,24,25,26,27,28,29,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]  # Example app IDs
+    # app_ids = [28]
+    # app_ids = [1,2,3,4]
     # print("Starting crawl_comment task...")
     # start_and_track_task("crawl_comment", {"app_ids": app_ids})
 
@@ -107,21 +108,33 @@ if __name__ == "__main__":
     # start_and_track_task(
     #     "ngram_analysis",
     #     {
-    #         "sentiment": "positive",
+    #         "sentiment": "negative",
     #         "start_date": "2025-10-01",
     #         "end_date": "2026-02-01",
     #         "top_k": 50
     #     }
     #     )
 
-    monitor_all_tasks(30)
+    # monitor_all_tasks(30)
 
+    print("\nStarting summarization of Dima task...")
+
+    start_and_track_task(
+        "summarization_dima",
+        {
+            "titles": ['دریافت تسهیلات'],
+    "types": ['issue'],
+    "categories": ['loan'],
+    "sentiments": ['negative'],
+    "start_date": '2025-01-01',
+    "end_date": '2026-01-03'
+        }
+        )
     # print("\nStarting dima_sentiment_analysis..")
 
     # start_and_track_task(
     #     "sentiment_analysis_dima",
     #     {
-    #         "limit": 100,
     #     }
     #     )
     # print("\nStarting dima_comment_analysis..")
@@ -132,7 +145,6 @@ if __name__ == "__main__":
 
     #         }
     #         )
-
     # print("\nStarting sentiment_analysis task...")
     # start_and_track_task("sentiment_analysis_apps", {"app_ids": app_ids})
     # # result_check_add_url = make_request("check_add_url",{"crawl_url": crawl_url})

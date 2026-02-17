@@ -20,6 +20,8 @@ from repetitive_detection import flag_repetitive_comments
 
 from main_comment_analysis import run_comment_analysis_batch
 ##################################################################################
+from main_RPC_summarization import run_summarization
+#######################################################################################
 # Setup logger
 logger = setup_logger('rpc_server', 'rpc_server.log')
 # Initialize logger
@@ -97,7 +99,7 @@ def perform_task(task_id, task_function, use_gpu=False, *args):
         if use_gpu and acquired:
             gpu_lock.release()
 
-
+##############################################################################################
 
 @dispatcher.add_method
 def crawl_comment(app_ids):
@@ -123,7 +125,7 @@ def crawl_comment(app_ids):
     threading.Thread(target=perform_task, args=(task_id, wrapped_task)).start()
     return {"task_id": task_id, "message": "Task started: Crawling comments"}
 
-
+##################################################################################################3
 @dispatcher.add_method
 def sentiment_analysis_apps(app_ids):
     global tasks_status, crawl_event
@@ -146,7 +148,7 @@ def sentiment_analysis_apps(app_ids):
     ).start()
     return {"task_id": task_id, "message": "Task started: Sentiment analysis from app_comments"}
 
-
+################################################################################################
 @dispatcher.add_method
 def check_add_url(crawl_url, crawl_app_nickname="unknown"):
     try:
@@ -166,7 +168,7 @@ def check_add_url(crawl_url, crawl_app_nickname="unknown"):
         logger.error(f"Error checking URL {crawl_url}: {e}", exc_info=True)
         return {"status": "error", "message": f"An error occurred: {e}"}
 
-
+################################################################################################
 @dispatcher.add_method
 def check_task_status(task_id):
     global tasks_status
@@ -184,6 +186,7 @@ def check_task_status(task_id):
             "error": task.get("error")
         }
 
+#################################################################################################
 ## status of all tasks
 @dispatcher.add_method
 def list_tasks():
@@ -197,7 +200,7 @@ def list_tasks():
             for task_id, task in tasks_status.items()
         }
 
-
+###########################################################################################################
 @dispatcher.add_method
 def ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
 
@@ -233,6 +236,47 @@ def ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
     return {
         "task_id": task_id,
         "message": "Task started: Ngram analysis"
+    }
+#############################################################################################################
+@dispatcher.add_method
+def summarization_dima(
+    titles,
+    types,
+    categories,
+    sentiments,
+    start_date,
+    end_date
+):
+
+    task_id = '6'
+
+    with tasks_lock:
+        tasks_status[task_id] = {
+            "status": "started",
+            "description": "Running LLM summarization",
+            "result": None,
+            "error": None
+        }
+
+    def wrapped_task():
+        return run_summarization(
+            titles=titles,
+            types=types,
+            categories=categories,
+            sentiments=sentiments,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+    threading.Thread(
+        target=perform_task,
+        args=(task_id, wrapped_task),
+        kwargs={"use_gpu": True}
+    ).start()
+
+    return {
+        "task_id": task_id,
+        "message": "Summarization task started"
     }
 
 
