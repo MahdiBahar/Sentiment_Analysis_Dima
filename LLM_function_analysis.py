@@ -79,7 +79,7 @@ severity / priority: high | medium | low | null
 
 - If find more than one categories for comment, just choose one and ignore other options.
 - If the comment contains phrases like:
-حرف نداره or عالیه or خیلی خوبه or واقعا خوبه or دمتون گرم or دستتون درد نکنه or خسته نباشید,
+'حرف نداره' or 'عالیه' or 'خیلی خوبه' or 'واقعا خوبه' or 'دمتون گرم' or 'دستتون درد نکنه' or 'خسته نباشید' or 'سپاس فراوان' or 'کار راه بنداز' or 'از این بهتر نیست' ,
 It must be classified as praise even if structure contains contrast words.
 
 JSON format:

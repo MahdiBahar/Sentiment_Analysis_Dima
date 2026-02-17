@@ -43,6 +43,8 @@ neutral_phrases = [
         "بدی نیست",
     "نظری ندارم",
     "نظر خاصی ندارم",
+    "ندارم",
+    "نظری ندارم",
    "نه خوب نه بعد",
     "معمولی",
 ]
@@ -178,8 +180,8 @@ def run_comment_analysis_batch(logger):
                     with conn: 
                         upsert_comment_analysis(conn, analysis)
                         logger.info(f"comment {c['comment_id']} is inserted to comment analysis table properly")
-                        # mark_comment_as_analyzed(conn, c["comment_id"])
-                        # logger.info(f"comment {c['comment_id']} is changed to is_analyzed")
+                        mark_comment_as_analyzed(conn, c["comment_id"])
+                        logger.info(f"comment {c['comment_id']} is changed to is_analyzed")
 
                         processed_count += 1
 
