@@ -92,4 +92,4 @@ def analyze_and_update_sentiment_apps(logger, comments, app_id):
             logger.error(f"Error processing comment_id: {comment_id}: {e}", exc_info=True)
             update_sentiment_apps(logger, comment_id, "Missed Value", 11, False)
             continue
-        time.sleep(20)
+        time.sleep(0.3)
