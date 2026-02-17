@@ -169,6 +169,53 @@ def fetch_comments_to_summarize(type,category, title, sentiment_result):
         logger.error(f"Error fetching comments: {e}", exc_info=True)
         return []
 
+def fetch_comments_to_summarize_RPC(type,category, title, sentiment_result,start_date, end_date):
+    logger.info("Fetching comments from 'comments' table for LLM analysis.")
+    try:
+        conn = connect_db()
+        cursor = conn.cursor()
+
+        query = """
+            SELECT
+                type,
+                category,
+                title,
+                sentiment_result,
+                normalized_title
+            FROM dima_comments_analysis
+            WHERE
+                type = %s
+               AND category = %s
+                AND title = %s
+                AND sentiment_result = %s 
+                AND created_at BETWEEN %s AND %s       
+            ;
+            
+        """
+
+        cursor.execute(query,(type,category, title,sentiment_result, start_date, end_date))
+        rows = cursor.fetchall()
+
+
+        comments = [
+            {
+                "type": r[0],
+                "category": r[1],
+                "title": r[2],
+                "sentiment_result": r[3],
+                "normalized_title": r[4],
+            }
+            for r in rows
+        ]
+        logger.info(f"Fetched {len(comments)} comments for analysis.")
+        count = len(comments)
+        cursor.close()
+        conn.close()
+        return comments , count
+
+    except Exception as e:
+        logger.error(f"Error fetching comments: {e}", exc_info=True)
+        return []
 
 #################################################################################\
 def upsert_summarized_analysis(conn, analysis):
