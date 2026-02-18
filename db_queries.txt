@@ -119,3 +119,46 @@ ADD CONSTRAINT unique_message_time UNIQUE (user_message, created_at);
 ALTER TABLE dima_ai_assistant
 ALTER COLUMN created_at TYPE TIMESTAMP
 USING created_at::timestamp;
+
+#######################################################################################
+# For summarization table
+
+CREATE TABLE dima_summarized_results (
+    summarized_id      BIGSERIAL PRIMARY KEY,
+    user_id            BIGINT NOT NULL,
+    created_at         TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    filter             JSONB NOT NULL,
+    summarized_comment TEXT,
+    comment_count      INTEGER,
+    status             VARCHAR(20) NOT NULL DEFAULT 'working',
+    duration_seconds   NUMERIC(10,2),
+    model              VARCHAR(100),
+    is_deleted         BOOLEAN DEFAULT FALSE,
+
+    CONSTRAINT fk_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX idx_summarized_user ON dima_summarized_results(user_id);
+CREATE INDEX idx_summarized_created_at ON dima_summarized_results(created_at);
+CREATE INDEX idx_summarized_status ON dima_summarized_results(status);
+
+###################################################################################################
+
+# Add test data for dima_summarized_results
+
+INSERT INTO dima_summarized_results (user_id, filter)
+VALUES (
+    8,
+    '{
+        "titles": ["دریافت تسهیلات"],
+        "types": ["issue"],
+        "categories": ["loan","support","ui"],
+        "sentiments": ["negative"],
+        "start_date": "2026-01-01",
+        "end_date": "2026-01-15"
+    }'::jsonb
+)
+RETURNING summarized_id;
