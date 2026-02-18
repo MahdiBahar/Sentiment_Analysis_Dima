@@ -1,4 +1,4 @@
-from LLM_summarize import call_LLM_summarize_comment, fetch_comments_to_summarize_RPC, extract_json, upsert_summarized_analysis,append_jsonl
+from LLM_summarize import call_LLM_summarize_comment, fetch_comments_to_summarize_RPC, update_summarized_result, extract_json
 from connect_to_database_func import connect_db
 from dotenv import load_dotenv
 from cafe_bazar_app.logging_config import setup_logger  # Import logger setup function
@@ -25,133 +25,156 @@ def chunk_list(items, chunk_size):
 
 
 
-def run_summarization(
-    titles,
-    types,
-    categories,
-    sentiments,
-    start_date,
-    end_date
+def run_summarization_batch(
+    requests , model
 ):
+    conn = connect_db()
+    batch_results = []
 
-    final_response = []
+    for job in requests:
+        ## test output
+        print("TYPE:", type(requests))
+        print("VALUE:", requests)
+        print("type_job" , type(job))
+        print("job" , job)
+        summarized_id = int(job.get("summarized_id"))
+        filters = job.get("filter", {})
+    
+        print("FILTER DATA:", filters)
 
-    for title in titles:
-        for type_name in types:
-            for category in categories:
-                for sentiment in sentiments:
+        print("titles:", filters.get("titles"))
+        print("types:", filters.get("types"))
+        print("categories:", filters.get("categories"))
+        print("sentiments:", filters.get("sentiments"))
 
-                    comments,count = fetch_comments_to_summarize_RPC(
-                        title=title,
-                        type=type_name,
-                        category=category,
-                        sentiment_result=sentiment,
-                        start_date=start_date,
-                        end_date=end_date
-                    )
-                    print("Type of first comment:", type(comments[0]))
-                    print("Example comment:", comments[0])
+        start_time = time.time()
+        try:
 
-                    if count<=5:
-                        return {
-                            "message": "In this filter we have a few number of comments for summarizing",
-                                "data": []
-                            }
+            final_response = []
+            total_comment_count = 0
+            titles = filters.get("titles") or []
+            types = filters.get("types") or []
+            categories = filters.get("categories") or []
+            sentiments = filters.get("sentiments") or []
+            start_date = filters.get("start_date")
+            end_date = filters.get("end_date")
+            if not titles or not types or not categories or not sentiments or not start_date or not end_date:
+                raise ValueError("One or more required filters are missing")
 
-                    chunk_summaries = []
+            for title in titles:
+                for type_name in types:
+                    for category in categories:
+                        for sentiment in sentiments:
 
-                    comment_texts = [
+                            comments, comment_count = fetch_comments_to_summarize_RPC(
+                                title=title,
+                                type=type_name,
+                                category=category,
+                                sentiment_result=sentiment,
+                                start_date=start_date,
+                                end_date=end_date
+                            )
+                            total_comment_count += comment_count
+
+                            if comment_count <= 4:
+                                raise ValueError("Not enough comments for summarization")
+
+                            comment_texts = [
                                 c["normalized_title"]
                                 for c in comments
                                 if c.get("normalized_title")
-]
+                            ]
 
-                    # 🔹 CHUNKING
-                    for chunk in chunk_list(comment_texts, MAX_COMMENTS_PER_CHUNK):
+                            chunk_summaries = []
 
-                        joined_comments = "\n".join(chunk)
+                            # 🔹 CHUNKING
+                            for chunk in chunk_list(comment_texts, MAX_COMMENTS_PER_CHUNK):
 
-                        llm_output = call_LLM_summarize_comment(
-                            title=title,
-                            category=category,
-                            sentiment_result=sentiment,
-                            type=type_name,
-                            normalized_title=joined_comments,
-                            retries=2
-                        )
+                                joined_comments = "\n".join(chunk)
 
-                        parsed = extract_json(llm_output)
-                        chunk_summaries.append(
-                            parsed.get("summarized_comment", "")
-                        )
+                                llm_output = call_LLM_summarize_comment(
+                                    title=title,
+                                    category=category,
+                                    sentiment_result=sentiment,
+                                    type=type_name,
+                                    normalized_title=joined_comments,
+                                    retries=2,
+                                )
 
-                    # 🔹 FINAL MERGE SUMMARY
-                    if len(chunk_summaries) > 1:
+                                parsed = extract_json(llm_output)
+                                chunk_summaries.append(
+                                    parsed.get("summarized_comment", "")
+                                )
 
-                        merged_text = "\n".join(chunk_summaries)
+                            # 🔹 FINAL MERGE
+                            if len(chunk_summaries) > 1:
 
-                        final_llm = call_LLM_summarize_comment(
-                            title=title,
-                            category=category,
-                            sentiment_result=sentiment,
-                            type=type_name,
-                            normalized_title=merged_text,
-                            retries=2
-                        )
+                                merged_text = "\n".join(chunk_summaries)
 
-                        final_parsed = extract_json(final_llm)
-                        final_summary = final_parsed.get("summarized_comment", "")
+                                final_llm = call_LLM_summarize_comment(
+                                    title=title,
+                                    category=category,
+                                    sentiment_result=sentiment,
+                                    type=type_name,
+                                    normalized_title=merged_text,
+                                    retries=2,
+                                )
 
-                    else:
-                        final_summary = chunk_summaries[0]
+                                final_parsed = extract_json(final_llm)
+                                final_summary = final_parsed.get("summarized_comment", "")
 
-                    final_response.append({
-                        "title": title,
-                        "type": type_name,
-                        "category": category,
-                        "sentiment": sentiment,
-                        "start_date": start_date,
-                        "end_date": end_date,
-                        "comment_count": len(comments),
-                        "summary": final_summary
-                    })
+                            else:
+                                final_summary = chunk_summaries[0]
 
-    if not final_response:
-        return {
-            "message": "No data found for given filters and date range",
-            "data": []
-        }
+                            final_response.append(final_summary)
+
+            # 🔹 SUCCESS UPDATE
+            duration = round(time.time() - start_time, 2)
+
+            update_summarized_result(conn, {
+                "summarized_id": summarized_id,
+                "summarized_comment": "\n\n".join(final_response),
+                "comment_count": total_comment_count,
+                "status": "completed",
+                "duration_seconds": duration,
+                "model": model
+            })
+            batch_results.append({
+                "summarized_id": summarized_id,
+                "status": "completed"
+            })
+            # return {
+            #     "message": "Summarization completed",
+            #     "data": final_response
+            # }
+        except Exception as e:
+
+            duration = round(time.time() - start_time, 2)
+
+            # 🔹 FAILURE UPDATE
+            update_summarized_result(conn, {
+                "summarized_id": summarized_id,
+                "summarized_comment": None,
+                "comment_count": 0,
+                "status": "failed",
+                "duration_seconds": duration,
+                "model": "your_model_name_here"
+            })
+
+            logger.error(f"Summarization failed: {str(e)}")
+
+            batch_results.append({
+                "summarized_id": summarized_id,
+                "status": "failed",
+                "error": str(e)
+            }) 
+            # return {
+            #     "message": "Summarization failed",
+            #     "error": str(e)
+            # }
+    conn.close()
 
     return {
-    "message": "Summarization completed",
-    "data": final_response
-}
-
-
-
-
-# if __name__ == "__main__":
-#     logger.info("🚀 Starting summarizaing...")
-
-#     titles = ["انتقال وجه"]
-#     types = ["issue","suggestion"]
-#     categories = ["transfer","card"]
-#     sentiments = ["very negative", "negative"]
-
-
-#     # titles = ["دریافت تسهیلات","انتقال وجه","سایر","مدیریت حساب‌ها","کارت‌ها","دستیار هوشمند","پرداخت قبض","خرید شارژ"]
-#     # types = ["issue","suggestion","question","praise","other"]
-#     # categories = ["transfer","auth","card","bill","loan","login","ui","performance", "AI", "other"]
-#     # sentiments = ["very negative", "negative", "no sentiment expressed","positive", "very positive"]
-
-#     # titles = ["دریافت تسهیلات","انتقال وجه"]
-#     # types = ["issue","suggestion"]
-#     # categories = ["transfer","auth","card","loan"]
-#     # sentiments = ["very negative", "negative"]
-
-
-#     output_path = "summarized_comments.jsonl"
-
-#     final_summarization(titles, types, categories, sentiments)
-
-#     logger.info("✅ comment summarization completed.")
+        "message": "Batch summarization finished",
+        "data": batch_results
+    }
