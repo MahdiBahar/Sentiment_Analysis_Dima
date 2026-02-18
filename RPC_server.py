@@ -20,7 +20,7 @@ from repetitive_detection import flag_repetitive_comments
 
 from main_comment_analysis import run_comment_analysis_batch
 ##################################################################################
-from main_RPC_summarization import run_summarization
+from main_RPC_summarization import run_summarization_batch
 #######################################################################################
 # Setup logger
 logger = setup_logger('rpc_server', 'rpc_server.log')
@@ -239,34 +239,20 @@ def ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
     }
 #############################################################################################################
 @dispatcher.add_method
-def summarization_dima(
-    titles,
-    types,
-    categories,
-    sentiments,
-    start_date,
-    end_date
-):
+def summarization_dima(requests):
 
     task_id = '6'
-
+    model = 'Ollama_Phi4'
     with tasks_lock:
         tasks_status[task_id] = {
             "status": "started",
-            "description": "Running LLM summarization",
+            "description": "Running batch LLM summarization",
             "result": None,
             "error": None
         }
 
     def wrapped_task():
-        return run_summarization(
-            titles=titles,
-            types=types,
-            categories=categories,
-            sentiments=sentiments,
-            start_date=start_date,
-            end_date=end_date
-        )
+        return run_summarization_batch([requests], model)
 
     threading.Thread(
         target=perform_task,
@@ -276,7 +262,7 @@ def summarization_dima(
 
     return {
         "task_id": task_id,
-        "message": "Summarization task started"
+        "message": "Batch summarization task started"
     }
 
 

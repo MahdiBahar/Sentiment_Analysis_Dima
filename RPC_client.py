@@ -119,17 +119,43 @@ if __name__ == "__main__":
 
     print("\nStarting summarization of Dima task...")
 
-    start_and_track_task(
-        "summarization_dima",
-        {
-            "titles": ['دریافت تسهیلات'],
-    "types": ['issue'],
-    "categories": ['loan'],
-    "sentiments": ['negative'],
-    "start_date": '2025-01-01',
-    "end_date": '2026-01-03'
-        }
-        )
+    # start_and_track_task(
+    #     "summarization_dima",
+    #     {
+    #         "titles": ['دریافت تسهیلات'],
+    # "types": ['issue'],
+    # "categories": ['loan'],
+    # "sentiments": ['negative'],
+    # "start_date": '2025-01-01',
+    # "end_date": '2026-01-03'
+    #     }
+    #     )
+    
+    # start_and_track_task("summarization_dima",[
+    #             {
+    #             "summarized_id": 7,
+    #             "filter": {
+    #                          "titles": ["دریافت تسهیلات"],
+    #     "types": ["issue"],
+    #     "categories": ["loan","support","ui"],
+    #     "sentiments": ["negative"],
+    #     "start_date": "2026-01-01",
+    #     "end_date": "2026-02-15"
+    #                         }
+    #             }])
+
+
+    start_and_track_task("summarization_dima",[
+                {
+                "summarized_id": 3,
+                "filter": {"type": ["issue"],
+  "titles": ["دریافت تسهیلات"],
+  "types": ["issue"],
+  "categories": ["loan"],
+  "end_date": "2026-01-31",
+  "sentiments": ["negative"],
+  "start_date": "2026-01-01"} 
+                }  ])
     # print("\nStarting dima_sentiment_analysis..")
 
     # start_and_track_task(
@@ -149,5 +175,14 @@ if __name__ == "__main__":
     # start_and_track_task("sentiment_analysis_apps", {"app_ids": app_ids})
     # # result_check_add_url = make_request("check_add_url",{"crawl_url": crawl_url})
     # # print(f"Result of check url to add or ignore is that {result_check_add_url}")
+
+
+
+#####################################################3
+#     # titles = ["دریافت تسهیلات","انتقال وجه","سایر","مدیریت حساب‌ها","کارت‌ها","دستیار هوشمند","پرداخت قبض","خرید شارژ"]
+#     # types = ["issue","suggestion","question","praise","other"]
+#     # categories = ["transfer","auth","card","bill","loan","login","ui","performance", "AI", "other"]
+#     # sentiments = ["very negative", "negative", "no sentiment expressed","positive", "very positive"]
+
 
 
