@@ -256,3 +256,39 @@ def upsert_summarized_analysis(conn, analysis):
     
     with conn.cursor() as cur:
         cur.execute(query, analysis)
+
+#################################################################################################
+
+def update_summarized_result(conn, data):
+
+    query = """
+        UPDATE dima_summarized_results
+        SET summarized_comment = %(summarized_comment)s,
+            comment_count      = %(comment_count)s,
+            status             = %(status)s,
+            duration_seconds   = %(duration_seconds)s,
+            model              = %(model)s,
+            imported_at        = NOW()
+        WHERE summarized_id = %(summarized_id)s;
+    """
+
+    required_keys = [
+        "summarized_id",
+        "summarized_comment",
+        "comment_count",
+        "status",
+        "duration_seconds",
+        "model"
+    ]
+
+    for key in required_keys:
+        if key not in data:
+            raise KeyError(f"Missing key: {key}")
+
+    with conn.cursor() as cur:
+        cur.execute(query, data)
+
+        if cur.rowcount == 0:
+            raise ValueError("Invalid summarized_id or row not found")
+
+    conn.commit()
