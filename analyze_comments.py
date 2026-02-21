@@ -24,14 +24,17 @@ def fetch_comments_to_analyze():
             FROM dima_comments
             WHERE
                 is_repetitive IS FALSE
-                AND is_analyzed IS FALSE
                 AND description IS NOT NULL 
                 AND TRIM(description) != ''
-                AND array_length( regexp_split_to_array(TRIM(description), '\s+'), 1) >= 3
+                AND sentiment_score IS NOT NULL
+                AND created_at > '2026-02-06'
+                
             ORDER BY id ASC
             
         """
-
+# AND is_analyzed IS FALSE
+# AND created_at >= '2026-01-25'
+#AND (id = 540486 OR id = 537365 OR id = 533010 OR id = 527713 OR id = 526221 OR id = 523844 OR id = 517013 OR id = 520234)
         cursor.execute(query)
         rows = cursor.fetchall()
 
@@ -70,11 +73,10 @@ def upsert_comment_analysis(conn, analysis):
             short_title,
             normalized_title,
             keywords,
-            severity,
-            priority,
             evidence,
             model,
-            processed_at
+            processed_at,
+            ai_title
         )
         VALUES (
             %(comment_id)s,
@@ -86,11 +88,10 @@ def upsert_comment_analysis(conn, analysis):
             %(short_title)s,
             %(normalized_title)s,
             %(keywords)s,
-            %(severity)s,
-            %(priority)s,
             %(evidence)s,
             %(model)s,
-            CURRENT_TIMESTAMP
+            CURRENT_TIMESTAMP,
+             %(ai_title)s
         )
         ON CONFLICT (comment_id)
         DO UPDATE SET
@@ -101,11 +102,11 @@ def upsert_comment_analysis(conn, analysis):
             short_title = EXCLUDED.short_title,
             normalized_title = EXCLUDED.normalized_title,
             keywords = EXCLUDED.keywords,
-            severity = EXCLUDED.severity,
-            priority = EXCLUDED.priority,
             evidence = EXCLUDED.evidence,
             model = EXCLUDED.model,
-            processed_at = CURRENT_TIMESTAMP;
+            processed_at = CURRENT_TIMESTAMP,
+            ai_title = EXCLUDED.ai_title
+            ;
 
     """
 
