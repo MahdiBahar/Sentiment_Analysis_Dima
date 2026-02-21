@@ -32,6 +32,7 @@ def fetch_comments_to_analyze(logger, limit=100):
         logger.error(f"Error fetching comments from dima_comments: {e}", exc_info=True)
         return []
 
+# AND created_at > '2026-01-20' AND created_at < '2026-01-25'
 
 # Update the comment table with the sentiment result and sentiment score
 def update_sentiment_dima(logger,id, sentiment_result, sentiment_score, second_model_processed):
@@ -94,7 +95,7 @@ def analyze_and_update_sentiment(logger, comments):
                         "very positive": 5,
                         "no sentiment expressed": 3
                     }
-            sentiment_result, sentiment_score = validate_and_score_sentiment(logger,sentiment_result,SENTIMENT_SCORES)
+            sentiment_result, sentiment_score = validate_and_score_sentiment(logger,sentiment_result,comment_text,SENTIMENT_SCORES)
             # sentiment_result, sentiment_score = validate_and_score_sentiment(logger,sentiment_result)
             update_sentiment_dima (logger,comment_id, sentiment_result, sentiment_score, second_model_processed)
 
@@ -104,4 +105,4 @@ def analyze_and_update_sentiment(logger, comments):
             update_sentiment_dima (logger,comment_id, "Missed Value", 11, False)
             continue
 
-        time.sleep(20)
+        time.sleep(0.3)

@@ -85,7 +85,7 @@ def analyze_and_update_sentiment_apps(logger, comments, app_id):
                         "very positive": 2,
                         "no sentiment expressed": 0
                     }
-            sentiment_result, sentiment_score = validate_and_score_sentiment(logger,sentiment_result,SENTIMENT_SCORES)
+            sentiment_result, sentiment_score = validate_and_score_sentiment(logger,sentiment_result,comment_text,SENTIMENT_SCORES)
             update_sentiment_apps(logger, comment_id, sentiment_result, sentiment_score, second_model_processed)
             logger.info(f"Updated comment_id: {comment_id} with sentiment: {sentiment_result}, score: {sentiment_score}")
         except Exception as e:

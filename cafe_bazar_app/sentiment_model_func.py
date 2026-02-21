@@ -89,10 +89,39 @@ def run_second_model(logger, comment_text):
         return "no sentiment expressed"
 
 # Validate sentiment result and assign score
-def validate_and_score_sentiment(logger, sentiment_result, SENTIMENT_SCORES):
-    sentiment_result = sentiment_result.lower()
-    if sentiment_result not in SENTIMENT_SCORES:
+def validate_and_score_sentiment(logger, sentiment_result,comments, SENTIMENT_SCORES):
+    neutral_phrases = [
+    "بد نیست",
+        "بد‌نیست",
+        "بد نبود",
+        "بدک نیست",
+        "بدی نیست",
+    "نظری ندارم",
+    "نظر خاصی ندارم",
+    "ندارم",
+    "نظری ندارم",
+   "نه خوب نه بعد",
+    "معمولی",
+    "بابت تاخیر عذر خواهی"
+]
+    positive_phrases = ['حرف نداره',
+                         'عالیه', 'خیلی خوبه' , 'واقعا خوبه' , 'دمتون گرم' , 'دستتون درد نکنه' , 'خسته نباشید' , 'سپاس فراوان' , 'کار راه بنداز' , 'از این بهتر نیست','خیلی خفنه','عالی لامصب','خیلی عال','بسیارعلی','عالی،بود',
+                         'خیلی الی','خیلی خوی','بسیار الی', 'خیلی خفنی', 'بسیار هالی','بانک ملت تکه','بسیارعلی'
+                         ]
+    if comments  in neutral_phrases:
+
         sentiment_result = "no sentiment expressed"
-    sentiment_score = SENTIMENT_SCORES[sentiment_result]
-    logger.debug(f"Validated sentiment: {sentiment_result}, Score: {sentiment_score}")
+        sentiment_score = SENTIMENT_SCORES[sentiment_result]
+        logger.debug(f"Validated sentiment in netrual phrases: {sentiment_result}, Score: {sentiment_score}")
+    elif comments in positive_phrases:
+        sentiment_result = "very positive"
+        sentiment_score = SENTIMENT_SCORES[sentiment_result]
+        logger.debug(f"Validated sentiment in positive phrases: {sentiment_result}, Score: {sentiment_score}")
+
+    else:    
+        sentiment_result = sentiment_result.lower()
+        if sentiment_result not in SENTIMENT_SCORES:
+            sentiment_result = "no sentiment expressed"
+        sentiment_score = SENTIMENT_SCORES[sentiment_result]
+        logger.debug(f"Validated sentiment: {sentiment_result}, Score: {sentiment_score}")
     return sentiment_result, sentiment_score
