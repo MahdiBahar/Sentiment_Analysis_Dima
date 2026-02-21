@@ -8,15 +8,27 @@ from cafe_bazar_app.logging_config import setup_logger  # Import logger setup fu
 
 load_dotenv()
 
-def infer_category_from_title(title: str, title_category_map):
+# def infer_category_from_title(title: str, title_category_map):
+#     if not title:
+#         return "other"
+
+#     norm_title = normalize_for_match(title)
+
+#     for keyword, category in title_category_map.items():
+#         if normalize_for_match(keyword) in norm_title:
+#             return category
+
+#     return "other"
+
+def infer_AI_title_from_title(title: str, title_AI_title_map):
     if not title:
         return "other"
 
     norm_title = normalize_for_match(title)
 
-    for keyword, category in title_category_map.items():
+    for keyword, ai_title in title_AI_title_map.items():
         if normalize_for_match(keyword) in norm_title:
-            return category
+            return ai_title
 
     return "other"
 
@@ -66,16 +78,31 @@ def run_comment_analysis_batch(logger):
     conn = connect_db()
     processed_count = 0
     failed_count = 0
-    TITLE_CATEGORY_MAP = {
+    # TITLE_CATEGORY_MAP = {
+    #     "دریافت تسهیلات": "loan",
+    #     "انتقال وجه": "transfer",
+    #     "کارت‌ها": "card",
+    #     "پرداخت قبض": "bill",
+    #     "خرید شارژ": "bill",
+    #     "دستیار هوشمند": "ai",
+    #     "مدیریت حساب‌ها": "account",
+    #     "سایر": "other",
+    # }
+    TITLE_AI_TITLE_MAP = {
         "دریافت تسهیلات": "loan",
         "انتقال وجه": "transfer",
         "کارت‌ها": "card",
         "پرداخت قبض": "bill",
-        "خرید شارژ": "bill",
+        "خرید شارژ": "top-up",
         "دستیار هوشمند": "ai",
         "مدیریت حساب‌ها": "account",
         "سایر": "other",
+        "پروفایل": "profile",
+        "خرید اینترنت": "internet package",
+        "کلیت اپلیکیشن" : "in general",
+
     }
+
     DRY_RUN = False
     try:
         for c in comments:
@@ -90,7 +117,7 @@ def run_comment_analysis_batch(logger):
                     # logger.info(f"The length of this comment with {c['comment_id']} id is {len(len_comment.split())}")
                     logger.info(f"Short comment detected for {c['comment_id']} — using title mapping")
 
-                    category = infer_category_from_title(c.get("title"),TITLE_CATEGORY_MAP)
+                    ai_title = infer_AI_title_from_title(c.get("title"),TITLE_AI_TITLE_MAP)
                     inferred_type = infer_type_from_sentiment(c.get("sentiment_result"))
                     
                     if force_neutral(c.get("comment_text")):
@@ -109,14 +136,13 @@ def run_comment_analysis_batch(logger):
                           "sentiment_result": c["sentiment_result"],
                             "title": c["title"],
                             "type": inferred_type,
-                            "category": category,
+                            "category": "other",
                             "short_title": c["title"],
                             "normalized_title": normalize_for_match(c["title"]),
                             "keywords": ["عمومی"],
-                            "severity": None,
-                            "priority": None,
                             "evidence": c["comment_text"],
-                            "model": "rule_based_short_comment"
+                            "model": "rule_based_short_comment",
+                            "ai_title" : ai_title
                     }
 
                 else:
@@ -129,7 +155,8 @@ def run_comment_analysis_batch(logger):
                             sentiment_result=c["sentiment_result"],
                             created_at=c["created_at"],
                             model=model,
-                            retries=2
+                            retries=2,
+                            app_title= c["title"]
                         )
 
 
@@ -144,9 +171,9 @@ def run_comment_analysis_batch(logger):
                         else c["created_at"]
                     )
                     # analysis["created_at"] = c["created_at"]
-                    if analysis["category"] == "ai assistant":
+                    if analysis["ai_title"] == "ai assistant":
 
-                        analysis["category"] = "ai"    
+                        analysis["ai_title"] = "ai"    
                     
                     if force_neutral(c.get("comment_text")):
                         forced_type = "other"
