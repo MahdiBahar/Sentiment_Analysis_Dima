@@ -123,14 +123,16 @@ def call_llm_semantic(comment_text: str,  app_title : str,retries: int = 2) -> s
     raise RuntimeError("Semantic LLM failed")
 
 
-def call_llm_category(normalized_title: str, type_: str, ai_title: str, retries: int = 2) -> str:
+def call_llm_category(comment_text: str, type_: str, ai_title: str, retries: int = 2) -> str:
     
+    preprocessed_comment = normalize_for_match(comment_text)
     prompt = LLM_CATEGORY_PROMPT.format(
-        normalized_title=normalized_title,
+        comment_text=preprocessed_comment,
         type=type_,
         ai_title=ai_title
     )
-    
+
+    # prompt += f"\nLikely ai_title based on title of app section: {ai_title}"
     for i in range(retries + 1):
         raw = llm.invoke(prompt)
         if raw and raw.strip():
@@ -215,22 +217,23 @@ other
 
 Category definitions:
 
-auth: OTP, verification, password reset, session expiration, face recognition or authentication.
+auth: OTP, verification, password reset, session expiration, face recognition and authentication.
 login: cannot log in, login button not working.
 ui: layout problems, visual bugs.
 performance: crash, lag, slow or bad performance.
-support: refund, no response from support.
+support: refund, no response from support, or bad call center.
 security: hacking, privacy, unauthorized access.
 notification: push notification problems.
 
+- If the comment mostly talks about a physical address, it should be other.
 You MUST return ONLY this JSON:
-
+- If in the comment directly talks about delaying to support team response or there is no supportation or related phrases, the category should be support. Otherwise do not consider the comment as support category.
 {{
   "category": ""
 }}
 
-normalized_title:
-{normalized_title}
+comment_text:
+{comment_text}
 
 Type:
 {type}

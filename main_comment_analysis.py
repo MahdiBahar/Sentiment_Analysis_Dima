@@ -180,7 +180,7 @@ def run_comment_analysis_batch(logger):
                     # Stage 2: Category
                     # --------------------
                     raw_category = call_llm_category(
-                        normalized_title=semantic_data["normalized_title"],
+                        comment_text=c["comment_text"],
                         type_=semantic_data["type"],
                         ai_title=semantic_data["ai_title"]
                     )
