@@ -41,24 +41,52 @@ def infer_AI_title_from_title(title: str, title_AI_title_map):
     return "other"
 
 
-def call_LLM_single_comment(
-    comment_id: str,
-    comment_text: str,
-    sentiment_result: str,
-    created_at: str,
-    model: str,
-    retries: int,
-    app_title : str
-) -> str:
-    preprocessed_comment = normalize_for_match(text = comment_text)
-    prompt = LLM_SINGLE_COMMENT_PROMPT.format(
-        # comment_id=comment_id,
-        # created_at=created_at,
-        # sentiment_result=sentiment_result,
-        # model = model,
-        comment_text=preprocessed_comment
-    )
-    TITLE_AI_TITLE_MAP = {
+# def call_LLM_single_comment(
+#     comment_id: str,
+#     comment_text: str,
+#     sentiment_result: str,
+#     created_at: str,
+#     model: str,
+#     retries: int,
+#     app_title : str
+# ) -> str:
+#     preprocessed_comment = normalize_for_match(text = comment_text)
+#     prompt = LLM_SINGLE_COMMENT_PROMPT.format(
+#         # comment_id=comment_id,
+#         # created_at=created_at,
+#         # sentiment_result=sentiment_result,
+#         # model = model,
+#         comment_text=preprocessed_comment
+#     )
+#     TITLE_AI_TITLE_MAP = {
+#         "دریافت تسهیلات": "loan",
+#         "انتقال وجه": "transfer",
+#         "کارت‌ها": "card",
+#         "پرداخت قبض": "bill",
+#         "خرید شارژ": "top-up",
+#         "دستیار هوشمند": "ai",
+#         "مدیریت حساب‌ها": "account",
+#         "سایر": "other",
+#         "پروفایل": "profile",
+#         "خرید اینترنت": "internet package",
+#         "کلیت اپلیکیشن" : "in general",
+
+#     }
+    
+#     hint_ai_title = infer_AI_title_from_title(app_title, TITLE_AI_TITLE_MAP)
+
+#     prompt += f"\nLikely ai_title based on title of app section: {hint_ai_title}"
+#     for i in range(retries + 1):
+#         raw = llm.invoke(prompt)
+
+#         if raw and raw.strip():
+#             return raw
+
+#         print(f"⚠️ Empty output, retry {i+1}")
+
+#     raise RuntimeError("Phi4 returned empty output after retries")
+
+TITLE_AI_TITLE_MAP = {
         "دریافت تسهیلات": "loan",
         "انتقال وجه": "transfer",
         "کارت‌ها": "card",
@@ -72,55 +100,67 @@ def call_LLM_single_comment(
         "کلیت اپلیکیشن" : "in general",
 
     }
+
+
+
+
+def call_llm_semantic(comment_text: str,  app_title : str,retries: int = 2) -> str:
+    preprocessed_comment = normalize_for_match(comment_text)
+
+    prompt = LLM_SEMANTIC_PROMPT.format(
+        comment_text=preprocessed_comment
+    )
     
     hint_ai_title = infer_AI_title_from_title(app_title, TITLE_AI_TITLE_MAP)
 
     prompt += f"\nLikely ai_title based on title of app section: {hint_ai_title}"
     for i in range(retries + 1):
         raw = llm.invoke(prompt)
-
         if raw and raw.strip():
             return raw
+        logger.warning(f"Empty semantic output retry {i+1}")
 
-        print(f"⚠️ Empty output, retry {i+1}")
+    raise RuntimeError("Semantic LLM failed")
 
-    raise RuntimeError("Phi4 returned empty output after retries")
 
-###################################################################################################
+def call_llm_category(normalized_title: str, type_: str, ai_title: str, retries: int = 2) -> str:
     
-LLM_SINGLE_COMMENT_PROMPT = """
+    prompt = LLM_CATEGORY_PROMPT.format(
+        normalized_title=normalized_title,
+        type=type_,
+        ai_title=ai_title
+    )
+    
+    for i in range(retries + 1):
+        raw = llm.invoke(prompt)
+        if raw and raw.strip():
+            return raw
+        logger.warning(f"Empty category output retry {i+1}")
+
+    raise RuntimeError("Category LLM failed")
+
+######################################################################################################
+LLM_SEMANTIC_PROMPT = """
 Analyze ONE Persian user comment and return ONE JSON object.
 
 Rules:
-- Output ONLY JSON. No markdown. No explanation.
-- Use ONLY the comment text.
-- evidence MUST be an exact quote from the comment.
-- short_title: max 10 words.
-- ALL fields must be in Persian (fa).
-- normalized_title MUST be Persian.
-- keywords MUST be Persian.
+- Output ONLY JSON.
+- No markdown.
+- No explanation.
+- All text fields must be Persian.
+- evidence MUST be exact quote from comment.
+- short_title max 10 words.
+- normalized_title must summarize the issue clearly.
+- keywords: 1 to 6 Persian keywords.
 
 Allowed values:
+
 type: issue | suggestion | question | praise | criticism | other
-ai_title: transfer | card | bill | loan   | in general | ai assistant | account | top-up | internet package | profile  | other
-category: auth | login | ui | performance | support | security | notification | other
 
-You must choose ONE category from the following list:
-auth : Authentication system problems such as OTP, verification, password reset, token/session expiration.
-login : Problems logging into the app (cannot log in, login button not working, stuck on login screen).
-ui : Visual or layout issues in the interface (misaligned buttons, overlapping text, confusing navigation).
-performance : App speed, freezing, crashes, lag, slow loading.
-support : Customer service issues, refund problems, no response from support.
-security : Privacy, hacking concerns, unauthorized access, data leaks.
-notification : Push notification problems, alerts not received, delayed notifications.
+ai_title: transfer | card | bill | loan | in general | ai assistant | account | top-up | internet package | profile | other
 
-Choose the MOST SPECIFIC category. If find more than one categories for comment, just choose one and ignore other options.
-
-
-
-- ai_title better match the app title context if possible.
-- If comment consists of some words like 'اقساط', the ai_title should be loan. 
-- If find more than one ai_titles for comment, just choose one and ignore other options.
+You must choose ONE type.
+You must choose ONE ai_title.
 
 
 You must choose ONE type from:
@@ -135,30 +175,147 @@ other : Only if none of the above apply.
 Choose the MOST appropriate type.
 Do NOT invent new types.
 
-- If the comment contains phrases like:
-'حرف نداره' or 'عالیه' or 'خیلی خوبه' or 'واقعا خوبه' or 'دمتون گرم' or 'دستتون درد نکنه' or 'خسته نباشید' or 'سپاس فراوان' or 'کار راه بنداز' or 'از این بهتر نیست' ,
-It must be classified as praise even if structure contains contrast words.
+If comment contains strong praise phrases like:
+"عالیه", "حرف نداره", "دمتون گرم", "سپاس", "خسته نباشید" ,"دستتون درد نکنه"
+→ type must be praise.
+
+
+- ai_title better match the app title context if possible.
+- If comment consists of some words like 'اقساط', the ai_title should be loan. 
+- If find more than one ai_titles for comment, just choose one and ignore other options.
 
 JSON format:
 
 {{
-  
   "type": "",
-  "category": "",
-    "ai_title" : "",
+  "ai_title": "",
   "short_title": "",
   "normalized_title": "",
-
   "keywords": [],
-
-  "evidence": "",
-
-  
+  "evidence": ""
 }}
 
 Comment:
 {comment_text}
- """
+"""
+##############################################################################################################
+LLM_CATEGORY_PROMPT = """
+You are classifying technical issue category.
+
+Choose ONE category from:
+
+auth
+login
+ui
+performance
+support
+security
+notification
+other
+
+Category definitions:
+
+auth: OTP, verification, password reset, session expiration, face recognition or authentication.
+login: cannot log in, login button not working.
+ui: layout problems, visual bugs.
+performance: crash, lag, slow or bad performance.
+support: refund, no response from support.
+security: hacking, privacy, unauthorized access.
+notification: push notification problems.
+
+You MUST return ONLY this JSON:
+
+{{
+  "category": ""
+}}
+
+normalized_title:
+{normalized_title}
+
+Type:
+{type}
+
+Feature:
+{ai_title}
+"""
+
+
+
+
+
+###################################################################################################
+    
+# LLM_SINGLE_COMMENT_PROMPT = """
+# Analyze ONE Persian user comment and return ONE JSON object.
+
+# Rules:
+# - Output ONLY JSON. No markdown. No explanation.
+# - Use ONLY the comment text.
+# - evidence MUST be an exact quote from the comment.
+# - short_title: max 10 words.
+# - ALL fields must be in Persian (fa).
+# - normalized_title MUST be Persian.
+# - keywords MUST be Persian.
+
+# Allowed values:
+# type: issue | suggestion | question | praise | criticism | other
+# ai_title: transfer | card | bill | loan   | in general | ai assistant | account | top-up | internet package | profile  | other
+# category: auth | login | ui | performance | support | security | notification | other
+
+# You must choose ONE category from the following list:
+# auth : Authentication system problems such as OTP, verification, password reset, token/session expiration.
+# login : Problems logging into the app (cannot log in, login button not working, stuck on login screen).
+# ui : Visual or layout issues in the interface (misaligned buttons, overlapping text, confusing navigation).
+# performance : App speed, freezing, crashes, lag, slow loading.
+# support : Customer service issues, refund problems, no response from support.
+# security : Privacy, hacking concerns, unauthorized access, data leaks.
+# notification : Push notification problems, alerts not received, delayed notifications.
+
+# Choose the MOST SPECIFIC category. If find more than one categories for comment, just choose one and ignore other options.
+
+
+
+# - ai_title better match the app title context if possible.
+# - If comment consists of some words like 'اقساط', the ai_title should be loan. 
+# - If find more than one ai_titles for comment, just choose one and ignore other options.
+
+
+# You must choose ONE type from:
+
+# issue : A specific problem or malfunction that needs fixing.
+# suggestion : A request for improvement or new feature.
+# question : A request for information or help.
+# praise : Positive feedback or satisfaction.
+# criticism : Negative opinion or dissatisfaction without a specific malfunction.
+# other : Only if none of the above apply.
+
+# Choose the MOST appropriate type.
+# Do NOT invent new types.
+
+# - If the comment contains phrases like:
+# 'حرف نداره' or 'عالیه' or 'خیلی خوبه' or 'واقعا خوبه' or 'دمتون گرم' or 'دستتون درد نکنه' or 'خسته نباشید' or 'سپاس فراوان' or 'کار راه بنداز' or 'از این بهتر نیست' ,
+# It must be classified as praise even if structure contains contrast words.
+
+# JSON format:
+
+# {{
+  
+#   "type": "",
+#   "category": "",
+#     "ai_title" : "",
+#   "short_title": "",
+#   "normalized_title": "",
+
+#   "keywords": [],
+
+#   "evidence": "",
+
+  
+# }}
+
+# Comment:
+# {comment_text}
+#  """
 
 # - If the issue is about entering the account → login
 # - If the issue is about verification, session, OTP, password reset → auth

@@ -1,7 +1,7 @@
 from connect_to_database_func import connect_db
 from dotenv import load_dotenv
 from analyze_comments import fetch_comments_to_analyze,upsert_comment_analysis,mark_comment_as_analyzed
-from LLM_function_analysis import call_LLM_single_comment, extract_json, validate_output, normalize_for_match
+from LLM_function_analysis import  extract_json, validate_output, normalize_for_match, call_llm_semantic, call_llm_category
 from datetime import datetime, timezone
 import json
 from cafe_bazar_app.logging_config import setup_logger  # Import logger setup function
@@ -148,44 +148,88 @@ def run_comment_analysis_batch(logger):
                 else:
 
                     logger.info(f"Analyzing comment {c['comment_id']}")
-                    model = "phi4"
-                    raw_analysis = call_LLM_single_comment(
-                            comment_id=str(c["comment_id"]),
-                            comment_text=c["comment_text"],
-                            sentiment_result=c["sentiment_result"],
-                            created_at=c["created_at"],
-                            model=model,
-                            retries=2,
-                            app_title= c["title"]
-                        )
 
 
-                    if not raw_analysis or not raw_analysis.strip():
+                                        # --------------------
+                    # Stage 1: Semantic
+                    # --------------------
+                    raw_semantic = call_llm_semantic(c["comment_text"],app_title=c["title"])
+                    semantic_data = extract_json(raw_semantic)
+                    
+                    if not raw_semantic or not raw_semantic.strip():
                         raise RuntimeError("LLM returned empty output")
-
-                    analysis  = extract_json(raw_analysis)
-
-                    analysis["created_at"] = (
+                    
+                    semantic_data["comment_id"] = c["comment_id"]
+                    semantic_data["created_at"] = (
                         c["created_at"].isoformat()
                         if hasattr(c["created_at"], "isoformat")
                         else c["created_at"]
                     )
-                    # analysis["created_at"] = c["created_at"]
-                    if analysis["ai_title"] == "ai assistant":
+                    semantic_data["sentiment_result"] = c["sentiment_result"]
+                    semantic_data["title"] = c["title"]
+                    semantic_data["model"] = "phi4_semantic"
+                    if semantic_data["ai_title"] == "ai assistant":
 
-                        analysis["ai_title"] = "ai"    
+                        semantic_data["ai_title"] = "ai" 
                     
                     if force_neutral(c.get("comment_text")):
                         forced_type = "other"
                         logger.info(f"force_neutral detected for {c['comment_id']} — mapping to others")
-                        analysis["type"] = forced_type
+                        semantic_data["type"] = forced_type
+                    # --------------------
+                    # Stage 2: Category
+                    # --------------------
+                    raw_category = call_llm_category(
+                        normalized_title=semantic_data["normalized_title"],
+                        type_=semantic_data["type"],
+                        ai_title=semantic_data["ai_title"]
+                    )
+
+                    category_data = extract_json(raw_category)
+
+                    semantic_data["category"] = category_data.get("category", "other")
+
+                    analysis = semantic_data
+
+
+                    # model = "phi4"
+                    # raw_analysis = call_LLM_single_comment(
+                    #         comment_id=str(c["comment_id"]),
+                    #         comment_text=c["comment_text"],
+                    #         sentiment_result=c["sentiment_result"],
+                    #         created_at=c["created_at"],
+                    #         model=model,
+                    #         retries=2,
+                    #         app_title= c["title"]
+                    #     )
+
+                    # if not raw_analysis or not raw_analysis.strip():
+                    #     raise RuntimeError("LLM returned empty output")
+                    
+
+                    # analysis  = extract_json(raw_analysis)
+
+                    # analysis["created_at"] = (
+                    #     c["created_at"].isoformat()
+                    #     if hasattr(c["created_at"], "isoformat")
+                    #     else c["created_at"]
+                    # )
+                    # # analysis["created_at"] = c["created_at"]
+                    # if analysis["ai_title"] == "ai assistant":
+
+                    #     analysis["ai_title"] = "ai"    
+                    
+                    # if force_neutral(c.get("comment_text")):
+                    #     forced_type = "other"
+                    #     logger.info(f"force_neutral detected for {c['comment_id']} — mapping to others")
+                    #     analysis["type"] = forced_type
 
                     
-                    analysis["title"] = c["title"]
-                    analysis["comment_id"] = c["comment_id"]
+                    # analysis["title"] = c["title"]
+                    # analysis["comment_id"] = c["comment_id"]
                     
-                    analysis["sentiment_result"] = c["sentiment_result"]
-                    analysis["model"] = model
+                    # analysis["sentiment_result"] = c["sentiment_result"]
+                    # analysis["model"] = model
 
 
                 validate_output(analysis, c["comment_text"])
