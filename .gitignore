@@ -10,6 +10,7 @@ __pycache__/
 /results
 /docs
 /logs
+/evaluation
 /convert_date_AI_aasistant
 *.jsonl
 # Distribution / packaging
