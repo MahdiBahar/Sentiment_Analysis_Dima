@@ -13,7 +13,7 @@ import nltk
 # ---------------------------
 # 1) Fetch comments from DB
 # ---------------------------
-def fetch_comments(sentiment=None, start_date=None, end_date=None, min_len=2, limit=None):
+def fetch_comments(sentiment=None, start_date=None, end_date=None, min_len=2,title = None ,limit=None):
     conn = connect_db()
     cur = conn.cursor()
 
@@ -35,8 +35,10 @@ def fetch_comments(sentiment=None, start_date=None, end_date=None, min_len=2, li
             base += " AND sentiment_score = 3"
         elif sentiment == "positive":
             base += " AND sentiment_score IN (4, 5)"
+        elif sentiment == "all":
+            base += " AND sentiment_score IN (1, 2,3,4,5)"
     
-    if sentiment and sentiment.lower() not in ["negative", "neutral", "positive"]:
+    if sentiment and sentiment.lower() not in ["negative", "neutral", "positive","all"]:
         raise ValueError("Sentiment must be negative, neutral, or positive")
 
     if start_date:
@@ -47,6 +49,13 @@ def fetch_comments(sentiment=None, start_date=None, end_date=None, min_len=2, li
         base += " AND created_at <= %s"
         args.append(end_date)
 
+    if title:
+        if title.lower() != "all":
+            base += " AND title = %s"
+            args.append(title)
+        # if title == "all" → no filtering
+    else:
+        raise ValueError("title is not valid")
     base += " ORDER BY id ASC"
 
     if limit:
@@ -126,38 +135,63 @@ def clean_and_tokenize(text: str):
 # -----------------------------------
 # 3) TF-IDF weighted n-grams
 # -----------------------------------
-def extract_top_ngrams_tfidf(
-    texts,
-    ngram_range=(2, 3),
-    top_k=30,
-    min_df=3,
-    max_df=0.6,
-    max_features=30000
-):
-    """Extract top TF-IDF weighted n-grams"""
+# def extract_top_ngrams_tfidf(
+#     texts,
+#     ngram_range=(2, 3),
+#     top_k=30,
+#     min_df=2,
+#     max_df=0.6,
+#     max_features=30000
+# ):
+#     """Extract top TF-IDF weighted n-grams"""
+#     vectorizer = TfidfVectorizer(
+#         tokenizer=clean_and_tokenize,
+#         preprocessor=lambda x: x,
+#         token_pattern=None,
+#         ngram_range=ngram_range,
+#         min_df=min_df,
+#         max_df=max_df,
+#         max_features=max_features
+#     )
+
+#     X = vectorizer.fit_transform(texts)
+#     feature_names = vectorizer.get_feature_names_out()
+#     # tfidf_scores = X.sum(axis=0).A1
+#     # tfidf_scores = np.asarray(X.mean(axis=0)).ravel()
+#     tfidf_scores = X.sum(axis=0).A1
+
+#     df_tfidf = pd.DataFrame({
+#         "ngram": feature_names,
+#         "tfidf": np.round(tfidf_scores,4)
+#     }).sort_values("tfidf", ascending=False).head(top_k).reset_index(drop=True)
+
+#     df_tfidf["n"] = df_tfidf["ngram"].str.count(" ") + 1
+#     # df_tfidf["n"] = df_tfidf["ngram"].str.count(" ") + 1
+#     print(df_tfidf.groupby("n").head(10))
+#     return df_tfidf
+
+
+def extract_top_ngrams_tfidf(texts, ngram_range, top_k, min_df=3):
     vectorizer = TfidfVectorizer(
         tokenizer=clean_and_tokenize,
         preprocessor=lambda x: x,
         token_pattern=None,
         ngram_range=ngram_range,
         min_df=min_df,
-        max_df=max_df,
-        max_features=max_features
+        max_df=0.6,
+        max_features=30000
     )
 
     X = vectorizer.fit_transform(texts)
     feature_names = vectorizer.get_feature_names_out()
-    # tfidf_scores = X.sum(axis=0).A1
-    tfidf_scores = np.asarray(X.mean(axis=0)).ravel()
+    tfidf_scores = X.sum(axis=0).A1   # use sum, not mean
 
     df_tfidf = pd.DataFrame({
         "ngram": feature_names,
-        "tfidf": np.round(tfidf_scores,4)
+        "tfidf": np.round(tfidf_scores, 4)
     }).sort_values("tfidf", ascending=False).head(top_k).reset_index(drop=True)
 
-    df_tfidf["n"] = df_tfidf["ngram"].str.count(" ") + 1
-    # df_tfidf["n"] = df_tfidf["ngram"].str.count(" ") + 1
-    print(df_tfidf.groupby("n").head(10))
+    df_tfidf["n"] = ngram_range[0]
     return df_tfidf
 
 # 4) Group sentiments (3 categories)
@@ -173,7 +207,7 @@ def group_sentiments(df):
     return df
 
 
-def run_ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
+def run_ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=25 , title = None):
     try:
         nltk.data.find("/home/mahdi/nltk_data/tokenizers/punkt")
     except LookupError:
@@ -182,7 +216,8 @@ def run_ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30)
     df = fetch_comments(
         sentiment=sentiment,
         start_date=start_date,
-        end_date=end_date
+        end_date=end_date,
+        title= title
     )
 
     if df.empty:
@@ -192,10 +227,19 @@ def run_ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30)
 
     texts = df["description"].tolist()
 
-    tfidf_df = extract_top_ngrams_tfidf(
-        texts,
-        ngram_range=(2,3),
-        top_k=top_k
-    )
+    bigram_k = int(top_k * 0.6)
+    trigram_k = top_k - bigram_k
 
-    return tfidf_df.to_dict(orient="records")
+    bigrams = extract_top_ngrams_tfidf(texts, (2,2), bigram_k)
+    trigrams = extract_top_ngrams_tfidf(texts, (3,3), trigram_k)
+
+    final_df = pd.concat([bigrams, trigrams]).reset_index(drop=True)
+
+    return final_df.to_dict(orient="records")
+    # tfidf_df = extract_top_ngrams_tfidf(
+    #     texts,
+    #     ngram_range=(2,3),
+    #     top_k=top_k
+    # )
+
+    # return tfidf_df.to_dict(orient="records")

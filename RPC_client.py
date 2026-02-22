@@ -96,7 +96,8 @@ crawl_url = 'https://cafebazaar.ir/app/ir.divar'
 
 if __name__ == "__main__":
     # app_ids = [23,24,25,26,27,28,29,30,31,32,33,34,35,36,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]  # Example app IDs
-    app_ids = [23,24,25,26,27,28,29,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]  # Example app IDs
+    # app_ids = [23,24,25,26,27,28,29,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]  # Example app IDs
+    app_ids = [30,31,32,33,34,35,36]  # Example app IDs
     # app_ids = [28]
     # app_ids = [1,2,3,4]
     # print("Starting crawl_comment task...")
@@ -108,16 +109,17 @@ if __name__ == "__main__":
     # start_and_track_task(
     #     "ngram_analysis",
     #     {
-    #         "sentiment": "negative",
-    #         "start_date": "2025-10-01",
-    #         "end_date": "2026-02-01",
-    #         "top_k": 50
+    #         "sentiment": "all",
+    #         "start_date": "2025-02-22",
+    #         "end_date": "2026-02-22",
+    #         "top_k": 60,
+    #         "title" :"all"
     #     }
     #     )
 
     # monitor_all_tasks(30)
 
-    print("\nStarting summarization of Dima task...")
+    # print("\nStarting summarization of Dima task...")
 
     # start_and_track_task(
     #     "summarization_dima",
@@ -133,29 +135,29 @@ if __name__ == "__main__":
     
     # start_and_track_task("summarization_dima",[
     #             {
-    #             "summarized_id": 7,
+    #             "summarized_id": 9,
     #             "filter": {
-    #                          "titles": ["دریافت تسهیلات"],
+    #                          "titles": ["دستیار هوشمند"],
     #     "types": ["issue"],
-    #     "categories": ["loan","support","ui"],
+    #     "categories": ["ai","support","ui"],
     #     "sentiments": ["negative"],
-    #     "start_date": "2026-01-01",
+    #     "start_date": "2025-01-01",
     #     "end_date": "2026-02-15"
-    #                         }
-    #             }])
+    #                          }
+    #              }])
 
 
-    start_and_track_task("summarization_dima",[
-                {
-                "summarized_id": 3,
-                "filter": {"type": ["issue"],
-  "titles": ["دریافت تسهیلات"],
-  "types": ["issue"],
-  "categories": ["loan"],
-  "end_date": "2026-01-31",
-  "sentiments": ["negative"],
-  "start_date": "2026-01-01"} 
-                }  ])
+#     start_and_track_task("summarization_dima",[
+#                 {
+#                 "summarized_id": 3,
+#                 "filter": {"type": ["issue"],
+#   "titles": ["دریافت تسهیلات"],
+#   "types": ["issue"],
+#   "categories": ["loan"],
+#   "end_date": "2026-01-31",
+#   "sentiments": ["negative"],
+#   "start_date": "2026-01-01"} 
+#                 }  ])
     # print("\nStarting dima_sentiment_analysis..")
 
     # start_and_track_task(
@@ -163,14 +165,14 @@ if __name__ == "__main__":
     #     {
     #     }
     #     )
-    # print("\nStarting dima_comment_analysis..")
+    print("\nStarting dima_comment_analysis..")
 
-    # start_and_track_task(
-    #         "comment_analysis_dima",
-    #         {
+    start_and_track_task(
+            "comment_analysis_dima",
+            {
 
-    #         }
-    #         )
+            }
+            )
     # print("\nStarting sentiment_analysis task...")
     # start_and_track_task("sentiment_analysis_apps", {"app_ids": app_ids})
     # # result_check_add_url = make_request("check_add_url",{"crawl_url": crawl_url})

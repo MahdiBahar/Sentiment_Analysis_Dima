@@ -201,42 +201,75 @@ def list_tasks():
         }
 
 ###########################################################################################################
-@dispatcher.add_method
-def ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30):
+# @dispatcher.add_method
+# def ngram_analysis(sentiment=None, start_date=None, end_date=None, top_k=30, title = None):
 
-    task_id = "5"
-    # task_id = str(len(tasks_status) + 1)
-    # import uuid
-    # task_id = str(uuid.uuid4())
+#     task_id = "5"
+#     # task_id = str(len(tasks_status) + 1)
+#     # import uuid
+#     # task_id = str(uuid.uuid4())
     
-    if top_k is not None:
-        top_k = int(top_k)
+#     if top_k is not None:
+#         top_k = int(top_k)
 
-    with tasks_lock:
-        tasks_status[task_id] = {
-            "status": "started",
-            "description": "Ngram analysis",
-            "result": None,
-            "error": None
-        }
+#     with tasks_lock:
+#         tasks_status[task_id] = {
+#             "status": "started",
+#             "description": "Ngram analysis",
+#             "result": None,
+#             "error": None
+#         }
 
-    def wrapped_task():
-        return run_ngram_analysis(
+#     def wrapped_task():
+#         return run_ngram_analysis(
+#             sentiment=sentiment,
+#             start_date=start_date,
+#             end_date=end_date,
+#             top_k=top_k,
+#             title = title
+#         )
+
+#     threading.Thread(
+#         target=perform_task,
+#         args=(task_id, wrapped_task)
+#     ).start()
+
+#     return {
+#         "task_id": task_id,
+#         "message": "Task started: Ngram analysis"
+#     }
+
+@dispatcher.add_method
+def ngram_analysis(
+    sentiment=None,
+    start_date=None,
+    end_date=None,
+    top_k=60,
+    title=None
+):
+    try:
+        if top_k is not None:
+            top_k = int(top_k)
+        print(title,sentiment,start_date,end_date)
+        result = run_ngram_analysis(
             sentiment=sentiment,
             start_date=start_date,
             end_date=end_date,
-            top_k=top_k
+            top_k=top_k,
+            title=title
         )
 
-    threading.Thread(
-        target=perform_task,
-        args=(task_id, wrapped_task)
-    ).start()
+        return {
+            "status": "completed",
+            "description": "Ngram analysis",
+            "result": result
+        }
 
-    return {
-        "task_id": task_id,
-        "message": "Task started: Ngram analysis"
-    }
+    except Exception as e:
+        return {
+            "status": "failed",
+            "error": str(e)
+        }
 #############################################################################################################
 @dispatcher.add_method
 def summarization_dima(requests):
