@@ -218,16 +218,16 @@ other
 Category definitions:
 
 auth: OTP, verification, password reset, session expiration, face recognition and authentication.
-login: cannot log in, login button not working.
+login: cannot log in to application or part of application, login button not working.
 ui: layout problems, visual bugs.
-performance: crash, lag, slow or bad performance.
+performance: crash, lag, slow or bad performance of application or bank.
 support: refund, no response from support, or bad call center.
 security: hacking, privacy, unauthorized access.
 notification: push notification problems.
 
-- If the comment mostly talks about a physical address, it should be other.
+- If the comment mostly talks about a physical address, it doesn't related to auth.
+
 You MUST return ONLY this JSON:
-- If in the comment directly talks about delaying to support team response or there is no supportation or related phrases, the category should be support. Otherwise do not consider the comment as support category.
 {{
   "category": ""
 }}
@@ -248,6 +248,9 @@ Feature:
 
 ###################################################################################################
     
+# - If in the comment directly talks about delaying to support team response or related phrases (like  پاسخگو نیستند و یا پشتیبانی دیر جواب میدهد), the category might be support. Otherwise do not consider the comment as support category.
+
+
 # LLM_SINGLE_COMMENT_PROMPT = """
 # Analyze ONE Persian user comment and return ONE JSON object.
 
