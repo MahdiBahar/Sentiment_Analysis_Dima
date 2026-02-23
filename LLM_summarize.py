@@ -169,13 +169,23 @@ def fetch_comments_to_summarize(type,category, title, sentiment_result):
         logger.error(f"Error fetching comments: {e}", exc_info=True)
         return []
 
-def fetch_comments_to_summarize_RPC(type,category, title, sentiment_result,start_date, end_date):
+###################################################################################################
+def fetch_comments_to_summarize_RPC(type, category, title, sent_result, start_date, end_date):
+
     logger.info("Fetching comments from 'comments' table for LLM analysis.")
+
     try:
         conn = connect_db()
         cursor = conn.cursor()
 
-        query = """
+        if isinstance(sent_result, list):
+            placeholders = ",".join(["%s"] * len(sent_result))
+            sentiment_clause = f"AND sentiment_result IN ({placeholders})"
+            params_sentiment = tuple(sent_result)
+        else:
+            sentiment_clause = "AND sentiment_result = %s"
+            params_sentiment = (sent_result,)
+        query = f"""
             SELECT
                 type,
                 category,
@@ -185,17 +195,16 @@ def fetch_comments_to_summarize_RPC(type,category, title, sentiment_result,start
             FROM dima_comments_analysis
             WHERE
                 type = %s
-               AND category = %s
+                AND category = %s
                 AND title = %s
-                AND sentiment_result = %s 
-                AND created_at BETWEEN %s AND %s       
-            ;
-            
+                {sentiment_clause}
+                AND created_at BETWEEN %s AND %s
         """
 
-        cursor.execute(query,(type,category, title,sentiment_result, start_date, end_date))
-        rows = cursor.fetchall()
+        params = (type, category, title) + params_sentiment + (start_date, end_date)
 
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
 
         comments = [
             {
@@ -207,17 +216,15 @@ def fetch_comments_to_summarize_RPC(type,category, title, sentiment_result,start
             }
             for r in rows
         ]
-        logger.info(f"Fetched {len(comments)} comments for analysis.")
-        count = len(comments)
         cursor.close()
         conn.close()
-        return comments , count
+
+        return comments, len(comments)
 
     except Exception as e:
         logger.error(f"Error fetching comments: {e}", exc_info=True)
-        return []
-
-#################################################################################\
+        return [], 0
+##################################################################\
 def upsert_summarized_analysis(conn, analysis):
     query = """
         INSERT INTO dima_comments_summarization (

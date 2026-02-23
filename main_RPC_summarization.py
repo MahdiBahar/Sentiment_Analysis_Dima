@@ -23,8 +23,6 @@ def chunk_list(items, chunk_size):
     for i in range(0, len(items), chunk_size):
         yield items[i:i + chunk_size]
 
-
-
 def run_summarization_batch(
     requests , model
 ):
@@ -65,15 +63,25 @@ def run_summarization_batch(
                 for type_name in types:
                     for category in categories:
                         for sentiment in sentiments:
-
+                            
+                            if sentiment == "positive":
+                                sent_result = ["very positive", "positive"]
+                            elif sentiment == "negative":
+                                sent_result = ["very negative", "negative"] 
+                            elif sentiment == "neutral":
+                                sent_result = ["no sentiment expressed", "neutral","mixed"]
+                            else:
+                                sent_result = [] 
+                            print(sent_result)
                             comments, comment_count = fetch_comments_to_summarize_RPC(
                                 title=title,
                                 type=type_name,
                                 category=category,
-                                sentiment_result=sentiment,
+                                sent_result=sent_result,
                                 start_date=start_date,
                                 end_date=end_date
                             )
+                            print(f"count of comments for type = {type} , sentiment = {sent_result}, category =  {category} is  {comment_count}")
                             total_comment_count += comment_count
 
                             if comment_count <= 4:
