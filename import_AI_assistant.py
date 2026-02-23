@@ -122,13 +122,13 @@ def parse_csv(filename: str, type_csv=0) -> List[AI_assistant]:
                     continue
             elif type_csv ==0: 
                 #for the second version of input csv
-                user_message = row[0]
-                assistant_message = row[1]
-                is_liked = row[2].lower() == "true"
-                created_at_str = row[7]
-                Q1 = row[4]
-                Q2 = row[5]
-                Q3 = row[6]
+                user_message = row[2]
+                assistant_message = row[3]
+                is_liked = row[4].lower() == "true"
+                created_at_str = row[9]
+                Q1 = row[6]
+                Q2 = row[8]
+                Q3 = row[7]
                 
                 # timestamp
                 try:
